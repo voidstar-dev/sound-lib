@@ -62,10 +62,11 @@ typedef struct
 
 } Sound_Config;
 
-bool Sound_Init();
-void Sound_DeviceLock();
-void Sound_DeviceUnlock();
+bool Audio_Init();
+void Audio_DeviceLock();
+void Audio_DeviceUnlock();
 Sound *Sound_Load(const char *filepath);
+void Sound_Free(Sound *sound);
 
 int Channel_Stop(int channel_index);
 int Channel_Start(int channel_index, Sound *sound, int loop_count);

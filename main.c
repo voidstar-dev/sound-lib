@@ -33,7 +33,7 @@ static void *xalloc(size_t size)
     return calloc(size, 1);
 }
 
-void Sound_DeviceLock()
+void Audio_DeviceLock()
 {
     ma_mutex_lock(&sound_config.mutex);
 }
@@ -110,7 +110,7 @@ static void data_callback2(ma_device* pDevice, void* output, const void* input, 
 {
     GET_SOUND_ENGINE();
 
-    Sound_DeviceLock();
+    Audio_DeviceLock();
 
     ma_engine_read_pcm_frames(engine, output, frame_count, NULL);
 
@@ -131,7 +131,7 @@ static void InitChannels()
     }
 }
 
-bool Sound_Init()
+bool Audio_Init()
 {
     int rate = 44100;
     int channels = 2;
@@ -275,7 +275,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
     Sound_Channel *c = 0;
     int index_out = -1;
 
-    Sound_DeviceLock();
+    Audio_DeviceLock();
 
     if(channel_index == -1)
     {
@@ -379,7 +379,7 @@ int main()
     Sound *sound;
     int i;
 
-    Sound_Init();
+    Audio_Init();
     sound = Sound_Load("test/blade.wav");
 
     for(i = 0; i < 1; i++)

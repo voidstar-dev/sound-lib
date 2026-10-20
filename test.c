@@ -28,7 +28,7 @@ int main()
     int i;
     int sleep_millis = 2000;
 
-    Sound_Init();
+    Audio_Init();
 
     sfx = Sound_Load(sfx_file);
     mus = Sound_Load(mus_file);
