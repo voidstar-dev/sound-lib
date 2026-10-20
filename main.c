@@ -1,14 +1,7 @@
-#include <stdio.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <assert.h>
 
 // Loading ma_sound from memory:
 // https://gist.github.com/p1xelHer0/abed4728096ea3a88af7802cbe46cf08
 
-#include "miniaudio.h"
 
 #define alloc_pointer(p) p = xalloc(sizeof *p)
 #define GET_DECODER_CONFIG() const ma_decoder_config *decoder_config = &sound_config.decoder_config
@@ -379,8 +372,11 @@ void Channel_SetPan(int index, float pan)
     }
 }
 
+#if 0
 int main()
 {
+    return 0;
+#if 0
     Sound *sound;
     int i;
 
@@ -402,4 +398,6 @@ int main()
     }
 	
     return 0;
+#endif
 }
+#endif

@@ -1,3 +1,13 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <assert.h>
+
+#include "miniaudio.h"
+
+
 #define SOUND_CHANNEL_STATUS_UNINITIALIZED 0
 #define SOUND_CHANNEL_STATUS_PLAYING 1
 #define SOUND_CHANNEL_STATUS_PAUSED 2
