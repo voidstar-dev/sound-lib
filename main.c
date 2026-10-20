@@ -5,15 +5,10 @@
 #include <string.h>
 #include <assert.h>
 
-
-
-
 // Loading ma_sound from memory:
 // https://gist.github.com/p1xelHer0/abed4728096ea3a88af7802cbe46cf08
 
-
 #include "miniaudio.h"
-void ma_sleep(ma_uint32 milliseconds);
 
 #define alloc_pointer(p) p = xalloc(sizeof *p)
 #define GET_DECODER_CONFIG() const ma_decoder_config *decoder_config = &sound_config.decoder_config
@@ -21,17 +16,18 @@ void ma_sleep(ma_uint32 milliseconds);
 
 #define SOUND_OK(call) ((call) == MA_SUCCESS)
 #define SOUND_FAILED(call) ((call) != MA_SUCCESS)
-#define SOUND_CHANNEL_COUNT 32
 
-#define SOUND_CHANNEL_STATUS_UNINITIALIZED 0
-#define SOUND_CHANNEL_STATUS_PLAYING 1
-#define SOUND_CHANNEL_STATUS_PAUSED 2
-#define SOUND_CHANNEL_STATUS_STOPPED 3
 
 #define CHECK(call) assert(call == MA_SUCCESS)
 
 #define ZERO_OBJECT(p) memset(p, 0, sizeof(*(p)))
 
+#include "sound_api.h"
+
+void ma_sleep(ma_uint32 milliseconds);
+
+Sound_Config sound_config;
+Sound_Channel channels[SOUND_CHANNEL_COUNT] = {0};
 
 static MA_INLINE float SATURATE(float x)
 {
@@ -40,61 +36,10 @@ static MA_INLINE float SATURATE(float x)
     return x;
 }
 
-void *xalloc(size_t size)
+static void *xalloc(size_t size)
 {
     return calloc(size, 1);
 }
-
-
-typedef struct
-{
-    ma_decoder decoder;
-    ma_sound sound_handle;
-
-    int status;
-    int current_loop;
-    int max_loops;
-
-    // A reference to its own index
-    int index;
-
-    // Volume ranges from 0 to 1
-    float volume;
-
-    // Pan ranges from -1 to 1
-    float pan;
-
-    // Pitch ranges from 0 to 1 (affects speed as well)
-    float pitch;
-
-    int loop_count;
-
-} Sound_Channel;
-
-typedef struct
-{
-    // Private data, do not touch!
-    void *data;
-    size_t size;
-} Sound;
-
-typedef struct
-{
-    int rate;
-    int channels;
-    ma_format format;
-    ma_decoder_config decoder_config;
-    ma_device device;
-
-    // Global mutex
-    ma_mutex mutex;
-
-    ma_engine engine;
-
-} Sound_Config;
-
-Sound_Config sound_config;
-Sound_Channel channels[SOUND_CHANNEL_COUNT] = {0};
 
 void Sound_DeviceLock()
 {
@@ -106,13 +51,13 @@ void Sound_DeviceUnlock()
     ma_mutex_unlock(&sound_config.mutex);
 }
 
-bool ChannelStatusIsFree(int status)
+static bool ChannelIsAvailable(int status)
 {
     return status == SOUND_CHANNEL_STATUS_STOPPED || status == SOUND_CHANNEL_STATUS_UNINITIALIZED;
 }
 
 // Returns -1 on error
-int Sound_FindFreeChannel()
+static int Sound_FindFreeChannel()
 {
     int result = -1;
     int i;
@@ -120,7 +65,7 @@ int Sound_FindFreeChannel()
     for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
     {
         Sound_Channel *c = &channels[i];
-        if(ChannelStatusIsFree(c->status))
+        if(ChannelIsAvailable(c->status))
         {
             result = i;
             break;
@@ -130,7 +75,7 @@ int Sound_FindFreeChannel()
     return result;
 }
 
-Sound_Channel *Sound_GetChannel(int index)
+static Sound_Channel *Sound_GetChannel(int index)
 {
     if(index >= 0 && index < SOUND_CHANNEL_COUNT)
     {
@@ -154,7 +99,7 @@ Sound_Channel *Sound_FindFreeChannelPointer(int index_in, int *index_out)
     else
     {
         result = Sound_GetChannel(index_in);
-        if(ChannelStatusIsFree(result->status))
+        if(ChannelIsAvailable(result->status))
         {
             index = index_in;
         }
@@ -169,7 +114,7 @@ Sound_Channel *Sound_FindFreeChannelPointer(int index_in, int *index_out)
     return result;
 }
 
-void data_callback2(ma_device* pDevice, void* output, const void* input, ma_uint32 frame_count)
+static void data_callback2(ma_device* pDevice, void* output, const void* input, ma_uint32 frame_count)
 {
     GET_SOUND_ENGINE();
 
@@ -239,13 +184,19 @@ size_t get_file_size(FILE *fp)
     return buf.st_size;
 }
 
+Sound *Sound_Alloc()
+{
+    Sound *result;
+    alloc_pointer(result);
+    return result; 
+}
+
 Sound *Sound_Load(const char *filepath)
 {
     FILE *fp = fopen(filepath, "rb");
     void *data = 0;
     size_t size = 0;
     Sound *sound;
-    GET_DECODER_CONFIG();
 
     if(fp)
     {
@@ -263,28 +214,22 @@ Sound *Sound_Load(const char *filepath)
         fclose(fp);
     }
 
-    alloc_pointer(sound);
+    sound = Sound_Alloc();
     sound->data = data;
     sound->size = size;
 
     return sound;
 }
 
-void Sound_Rewind(Sound *sound)
-{
-}
-
-void cb_channel_end(void *user_data, ma_sound *handle)
+static void cb_channel_end(void *user_data, ma_sound *handle)
 {
     // Fixme!!! Mutex
-
     Sound_Channel *c = (Sound_Channel *)user_data;
     c->status = SOUND_CHANNEL_STATUS_STOPPED;
-    printf("End channel\n");
 }
 
 
-bool Sound_ChannelIsFree(int index)
+static bool Sound_ChannelIsFree(int index)
 {
     Sound_Channel *c = Sound_GetChannel(index);
     if(c)
@@ -295,7 +240,7 @@ bool Sound_ChannelIsFree(int index)
     return false;
 }
 
-static void Sound_ChannelFreeInternal(Sound_Channel *c)
+static void Channel_FreeInternal(Sound_Channel *c)
 {
     ma_decoder_uninit(&c->decoder);
     ma_sound_uninit(&c->sound_handle);
@@ -307,9 +252,9 @@ int Channel_Stop(int channel_index)
     if(c)
     {
         ma_sound_stop(&c->sound_handle);
+        c->status = SOUND_CHANNEL_STATUS_STOPPED;
     }
 
-    c->status = SOUND_CHANNEL_STATUS_STOPPED;
 }
 
 // This function is in charge of looping
@@ -317,14 +262,14 @@ int Channel_Stop(int channel_index)
 // Instead, we manually keep track of the loop count ourselves.
 ma_data_source *cb_on_get_next(ma_data_source *data_source)
 {
-    bool should_loop = false;
+    bool should_loop;
     ma_decoder *decoder = (ma_decoder *)data_source;
     Sound_Channel *c = decoder->pUserData;
     ma_data_source *next = 0;
 
     if(c->loop_count > 0)
     {
-        c->loop_count -=1;
+        c->loop_count -= 1;
     }
 
     should_loop = c->loop_count != 0;
@@ -359,10 +304,11 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
         ma_uint32 flags = 0;
         ma_sound_config config;
         ma_data_source *data_source;
+
         GET_DECODER_CONFIG();
         GET_SOUND_ENGINE();
 
-        Sound_ChannelFreeInternal(c);
+        Channel_FreeInternal(c);
 
         c->status = SOUND_CHANNEL_STATUS_PLAYING;
         c->index = channel_index;
@@ -437,14 +383,17 @@ int main()
 {
     Sound *sound;
     int i;
+
     Sound_Init();
     sound = Sound_Load("test/blade.wav");
+
     for(i = 0; i < 1; i++)
     {
         Channel_SetPitch(1, 0.5);
         Channel_SetPan(1, 0.5);
         Channel_Start(1, sound, 5);
-        ma_sleep(2000);
+        ma_sleep(500);
+        Channel_Start(2, sound, -1);
     }
 
     for(;;)
