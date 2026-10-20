@@ -17,7 +17,6 @@
 
 #include "sound_api.h"
 
-void ma_sleep(ma_uint32 milliseconds);
 
 Sound_Config sound_config;
 Sound_Channel channels[SOUND_CHANNEL_COUNT] = {0};

@@ -14,6 +14,7 @@
 #define SOUND_CHANNEL_STATUS_STOPPED 3
 #define SOUND_CHANNEL_COUNT 32
 
+
 typedef struct
 {
     ma_decoder decoder;
@@ -71,3 +72,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count);
 int Sound_Play(Sound *sound, int channel, int loop_count);
 void Channel_SetVolume(int index, float volume);
 void Channel_SetPan(int index, float pan);
+
+
+// Not officially part of the API
+void ma_sleep(ma_uint32 milliseconds);

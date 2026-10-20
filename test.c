@@ -53,13 +53,22 @@ int main()
 
     if(sfx)
     {
+        printf("===================================================\n");
+        printf("> Playing '%s\n", sfx_file);
         Channel_Start(-1, sfx, 0);
+        printf("> Sleeping %d milliseconds\n", sleep_millis);
+        printf("===================================================\n");
         ma_sleep(sleep_millis);
+        printf("\n");
     }
 
     if(mus)
     {
+        printf("===================================================\n");
+        printf("> Playing '%s\n", mus_file);
         Channel_Start(-1, mus, 0);
+        printf("> Sleeping %d milliseconds\n", sleep_millis);
+        printf("===================================================\n");
         ma_sleep(sleep_millis);
     }
 

@@ -1,16 +1,26 @@
 cmake_minimum_required(VERSION 3.1)
 project(sound_lib)
 
+set(TEST_TARGETS)
+
 set(SOUND_SOURCES main.c miniaudio.c)
 set(TEST_SOURCES test.c)
 add_library(sound_lib SHARED ${SOUND_SOURCES})
 target_link_libraries(sound_lib PRIVATE m pthread dl)
 target_compile_options(sound_lib PRIVATE -Wdeclaration-after-statement -Werror)
 
+macro(build_test name)
+    string(TOUPPER ${name} DEF_NAME)
+    add_executable(${name} ${TEST_SOURCES})
+    target_compile_definitions(${name} PRIVATE ${DEF_NAME})
+    target_link_libraries(${name} PRIVATE sound_lib)
+    list(APPEND TEST_TARGETS ${name})
+endmacro()
 
-add_executable(test_wav ${TEST_SOURCES})
-target_compile_definitions(test_wav PRIVATE TEST_WAV)
-target_link_libraries(test_wav PRIVATE sound_lib)
 
+build_test(test_wav)
+build_test(test_mp3)
+build_test(test_ogg)
+build_test(test_flac)
 
-install(TARGETS sound_lib test_wav DESTINATION .)
+install(TARGETS sound_lib ${TEST_TARGETS} DESTINATION .)
