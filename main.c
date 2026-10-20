@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <assert.h>
 
 
 
+
+// Loading ma_sound from memory:
+// https://gist.github.com/p1xelHer0/abed4728096ea3a88af7802cbe46cf08
 
 
 #include "miniaudio.h"
@@ -13,6 +17,7 @@ void ma_sleep(ma_uint32 milliseconds);
 
 #define alloc_pointer(p) p = xalloc(sizeof *p)
 #define GET_DECODER_CONFIG() const ma_decoder_config *decoder_config = &sound_config.decoder_config
+#define GET_SOUND_ENGINE() ma_engine *engine = &sound_config.engine;
 
 #define SOUND_OK(call) ((call) == MA_SUCCESS)
 #define SOUND_FAILED(call) ((call) != MA_SUCCESS)
@@ -22,6 +27,8 @@ void ma_sleep(ma_uint32 milliseconds);
 #define SOUND_CHANNEL_PLAYING 1
 #define SOUND_CHANNEL_PAUSED 2
 #define SOUND_CHANNEL_STOPPED 3
+
+#define CHECK(call) assert(call == MA_SUCCESS)
 
 
 static MA_INLINE float SATURATE(float x)
@@ -40,9 +47,13 @@ void *xalloc(size_t size)
 typedef struct
 {
     ma_decoder decoder;
+    ma_sound sound_handle;
     int status;
     int current_loop;
     int max_loops;
+
+    // A reference to its own index
+    int index;
 
     // From ranges from 0 to 1
     float volume;
@@ -56,11 +67,11 @@ typedef struct
 {
     ma_decoder decoder;
     ma_decoder_config config;
+
     
     // Private data, do not touch!
     void *data;
     size_t size;
-
 } Sound;
 
 typedef struct
@@ -73,6 +84,8 @@ typedef struct
 
     // Gloabal mutex
     ma_mutex mutex;
+
+    ma_engine engine;
 
 } Sound_Config;
 
@@ -140,8 +153,10 @@ void data_callback(ma_device* pDevice, void* output, const void* input, ma_uint3
         if(c->status == SOUND_CHANNEL_PLAYING)
         {
             float volume = c->volume;
-            float pan = SATURATE(1 + c->pan);
+            float pan = c->pan;
             float pan_l = SATURATE(1 - pan);
+            float pan_r = SATURATE(1 + pan);
+
             while(frames_remaining > 0)
             {
                 int channel_count;
@@ -194,6 +209,12 @@ void data_callback(ma_device* pDevice, void* output, const void* input, ma_uint3
     Sound_DeviceUnlock();
 }
 
+void data_callback2(ma_device* pDevice, void* output, const void* input, ma_uint32 frame_count)
+{
+    GET_SOUND_ENGINE();
+    ma_engine_read_pcm_frames(engine, output, frame_count, NULL);
+}
+
 static void InitChannels()
 {
     memset(channels, 0, sizeof(channels));
@@ -211,6 +232,7 @@ bool Sound_Init()
     int channels = 2;
     ma_format format = ma_format_f32;
     ma_device_config device_config;
+    ma_engine_config engine_config;
 
     sound_config.rate = rate;
     sound_config.channels = channels;
@@ -224,21 +246,20 @@ bool Sound_Init()
     device_config.playback.format   = format;
     device_config.playback.channels = channels;
     device_config.sampleRate        = rate;
-    device_config.dataCallback      = data_callback;
+    device_config.dataCallback      = data_callback2;
 
-    
     InitChannels();
 
 
+
     ma_device_init(NULL, &device_config, &sound_config.device);
-    if(SOUND_OK(ma_device_start(&sound_config.device)))
-    {
-    }
-    else
-    {
-        printf("Failed...\n");
-        exit(0);
-    }
+
+    engine_config = ma_engine_config_init();
+    engine_config.pDevice = &sound_config.device;
+    engine_config.noAutoStart = MA_TRUE;
+
+    CHECK(ma_engine_init(&engine_config, &sound_config.engine));
+    CHECK(ma_engine_start(&sound_config.engine));
 }
 
 size_t get_file_size(FILE *fp)
@@ -255,11 +276,17 @@ Sound *Sound_Load(const char *filepath)
     FILE *fp = fopen(filepath, "rb");
     void *data = 0;
     size_t size = 0;
+    Sound *sound;
+
     if(fp)
     {
         size = get_file_size(fp);
         data = malloc(size);
         fread(data, 1, size, fp);
+    }
+    else
+    {
+        return 0;
     }
 
     if(fp)
@@ -267,15 +294,10 @@ Sound *Sound_Load(const char *filepath)
         fclose(fp);
     }
 
-MA_API ma_result ma_decoder_init_memory(const void* pData, size_t dataSize, const ma_decoder_config* pConfig, ma_decoder* pDecoder);
-
-    Sound *sound;
     alloc_pointer(sound);
     GET_DECODER_CONFIG();
     sound->data = data;
     sound->size = size;
-
-MA_API ma_result ma_decoder_init_memory(const void* pData, size_t dataSize, const ma_decoder_config* pConfig, ma_decoder* pDecoder);
 
     return sound;
 }
@@ -285,6 +307,15 @@ void Sound_Rewind(Sound *sound)
     Sound_DeviceLock();
 
     ma_decoder_seek_to_pcm_frame(&sound->decoder, 0);
+
+    Sound_DeviceUnlock();
+}
+
+void cb_channel_end(void *user_data, ma_sound *handle)
+{
+    Sound_DeviceLock();
+
+    Sound_Channel *c = (Sound_Channel *)user_data;
 
     Sound_DeviceUnlock();
 }
@@ -303,12 +334,26 @@ int Sound_Play(Sound *sound, int channel)
     c = Sound_FindFreeChannelPointer(&channel_index);
     if(c)
     {
+        // Todo:
         // Uninit the decoder if the channel doesn't have one.
+        // Uninit the sound
+
+        ma_uint32 flags;
 
         GET_DECODER_CONFIG();
         c->status = SOUND_CHANNEL_PLAYING;
+        c->index = channel_index;
         ma_decoder_init_memory(sound->data, sound->size, decoder_config, &c->decoder);
 
+        ma_data_source *data_source = c->decoder.ds.pCurrent;
+        ma_sound_config config = ma_sound_config_init();
+        config.pDataSource = data_source;
+        config.endCallback = cb_channel_end;
+
+        flags = MA_SOUND_FLAG_STREAM;
+        GET_SOUND_ENGINE();
+        CHECK(ma_sound_init_ex(engine, &config, &c->sound_handle));
+        CHECK(ma_sound_start(&c->sound_handle));
     }
 
     Sound_DeviceUnlock();
@@ -320,15 +365,15 @@ int main()
 {
     Sound_Init();
     Sound *sound = Sound_Load("test/blade.ogg");
-    for(int i = 0; i < 2; i++)
+    for(int i = 0; i < 3; i++)
     {
         Sound_Play(sound, -1);
-        ma_sleep(1000);
+        ma_sleep(300);
     }
 
     for(;;)
     {
-        sleep(1);
+        ma_sleep(1000);
     }
 	
     return 0;
