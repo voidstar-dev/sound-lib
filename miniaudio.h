@@ -12021,7 +12021,7 @@ static void ma_sleep__posix(ma_uint32 milliseconds)
 }
 #endif
 
-static MA_INLINE void ma_sleep(ma_uint32 milliseconds)
+void ma_sleep(ma_uint32 milliseconds)
 {
 #ifdef MA_WIN32
     ma_sleep__win32(milliseconds);
