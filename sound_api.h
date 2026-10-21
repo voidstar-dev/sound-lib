@@ -14,14 +14,25 @@
 #define SOUND_CHANNEL_STATUS_STOPPED 3
 #define SOUND_CHANNEL_COUNT 32
 
+typedef struct
+{
+    // Private data, do not touch!
+    void *data;
+    size_t size;
+} Sound;
 
 typedef struct
 {
     ma_decoder decoder;
     ma_sound sound_handle;
 
+    // The sound that's currently playing on this channel
+    Sound *sound;
+
+    // Playing status (SOUND_CHANNEL_STATUS_*)
     int status;
-    int current_loop;
+
+    int loop_count;
     int max_loops;
 
     // A reference to its own index
@@ -36,16 +47,7 @@ typedef struct
     // Pitch ranges from 0 to 1 (affects speed as well)
     float pitch;
 
-    int loop_count;
-
 } Sound_Channel;
-
-typedef struct
-{
-    // Private data, do not touch!
-    void *data;
-    size_t size;
-} Sound;
 
 typedef struct
 {

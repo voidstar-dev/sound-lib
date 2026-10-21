@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 project(sound_lib)
 
-if(UNIX)
+if(UNIX AND NOT APPLE)
     set(BIN_DIR bin_linux)
     set(SHARED_LIBS m pthread dl)
 endif()
@@ -18,6 +18,8 @@ add_library(sound_lib SHARED ${SOUND_SOURCES})
 target_link_libraries(sound_lib PRIVATE ${SHARED_LIBS})
 target_compile_options(sound_lib PRIVATE -Wdeclaration-after-statement -Werror)
 
+
+# Builds a collection of test executables that try out different file extensions
 macro(build_test name)
     string(TOUPPER ${name} DEF_NAME)
     add_executable(${name} ${TEST_SOURCES})

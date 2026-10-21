@@ -21,6 +21,10 @@ int main()
     #define EXT_NAME flac
     #endif
 
+    #ifndef EXT_NAME
+    #error "Invalid test configuration"
+    #endif
+
     const char *sfx_file = MA_XSTRINGIFY(BASE_SFX_NAME)"."MA_XSTRINGIFY(EXT_NAME);
     const char *mus_file = MA_XSTRINGIFY(BASE_MUS_NAME)"."MA_XSTRINGIFY(EXT_NAME);
     Sound *sfx;
@@ -70,6 +74,10 @@ int main()
         printf("> Sleeping %d milliseconds\n", sleep_millis);
         printf("===================================================\n");
         ma_sleep(sleep_millis);
+
+        // Test sound freeing
+        Sound_Free(mus);
+        ma_sleep(1000);
     }
 
 	

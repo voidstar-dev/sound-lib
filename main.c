@@ -11,7 +11,7 @@
 #define SOUND_FAILED(call) ((call) != MA_SUCCESS)
 
 
-#define CHECK(call) assert(call == MA_SUCCESS)
+#define CHECK(call) assert((call) == MA_SUCCESS)
 
 #define ZERO_OBJECT(p) memset(p, 0, sizeof(*(p)))
 
@@ -38,7 +38,7 @@ void Audio_DeviceLock()
     ma_mutex_lock(&sound_config.mutex);
 }
 
-void Sound_DeviceUnlock()
+void Audio_DeviceUnlock()
 {
     ma_mutex_unlock(&sound_config.mutex);
 }
@@ -114,7 +114,7 @@ static void data_callback2(ma_device* pDevice, void* output, const void* input, 
 
     ma_engine_read_pcm_frames(engine, output, frame_count, NULL);
 
-    Sound_DeviceUnlock();
+    Audio_DeviceUnlock();
 }
 
 static void InitChannels()
@@ -139,9 +139,9 @@ bool Audio_Init()
     ma_device_config device_config;
     ma_engine_config engine_config;
 
-    sound_config.rate = rate;
-    sound_config.channels = channels;
-    sound_config.format = format;
+    sound_config.rate      = rate;
+    sound_config.channels  = channels;
+    sound_config.format    = format;
     ma_mutex_init(&sound_config.mutex);
 
     // Finally, init the config that all decoders from this point on will use.
@@ -155,8 +155,6 @@ bool Audio_Init()
 
     InitChannels();
 
-
-
     ma_device_init(NULL, &device_config, &sound_config.device);
 
     engine_config = ma_engine_config_init();
@@ -165,6 +163,8 @@ bool Audio_Init()
 
     CHECK(ma_engine_init(&engine_config, &sound_config.engine));
     CHECK(ma_engine_start(&sound_config.engine));
+
+    return true;
 }
 
 size_t get_file_size(FILE *fp)
@@ -213,6 +213,31 @@ Sound *Sound_Load(const char *filepath)
     return sound;
 }
 
+void Sound_Free(Sound *sound)
+{
+    int i;
+    Sound_Channel *c;
+
+    if(!sound) return;
+
+    Audio_DeviceLock();
+
+    for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
+    {
+        c = &channels[i];
+        if(c->sound == sound)
+        {
+            Channel_Stop(i);
+            c->sound = NULL;
+        }
+    }
+
+    free(sound->data);
+    ZERO_OBJECT(sound);
+
+    Audio_DeviceUnlock();
+}
+
 static void cb_channel_end(void *user_data, ma_sound *handle)
 {
     // Fixme!!! Mutex
@@ -254,7 +279,6 @@ int Channel_Stop(int channel_index)
 // Instead, we manually keep track of the loop count ourselves.
 ma_data_source *cb_on_get_next(ma_data_source *data_source)
 {
-    bool should_loop;
     ma_decoder *decoder = (ma_decoder *)data_source;
     Sound_Channel *c = decoder->pUserData;
     ma_data_source *next = 0;
@@ -264,12 +288,12 @@ ma_data_source *cb_on_get_next(ma_data_source *data_source)
         c->loop_count -= 1;
     }
 
-    should_loop = c->loop_count != 0;
-    next = should_loop ? data_source : 0;
+    next = c->loop_count ? data_source : 0;
 
     return next;
 }
 
+// Todo: What do we do on a null sound pointer?
 int Channel_Start(int channel_index, Sound *sound, int loop_count)
 {
     Sound_Channel *c = 0;
@@ -310,6 +334,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
         // The decoder needs a reference back to the channel so that we can use it in cb_on_get_next()
         // This controls the looping behaviour
         c->decoder.pUserData = c; 
+        c->sound = sound;
 
         flags = MA_SOUND_FLAG_STREAM;
 
@@ -329,7 +354,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
         CHECK(ma_sound_start(&c->sound_handle));
     }
 
-    Sound_DeviceUnlock();
+    Audio_DeviceUnlock();
 
     return index_out;
 }
