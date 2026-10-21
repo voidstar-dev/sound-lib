@@ -280,17 +280,6 @@ static void cb_channel_end(void *user_data, ma_sound *handle)
 }
 
 
-static bool Sound_ChannelIsFree(int index)
-{
-    Sound_Channel *c = Sound_GetChannel(index);
-    if(c)
-    {
-        return c->status == SOUND_CHANNEL_STATUS_UNINITIALIZED || c->status == SOUND_CHANNEL_STATUS_STOPPED;
-    }
-
-    return false;
-}
-
 static void Channel_FreeInternal(Sound_Channel *c)
 {
     ma_decoder_uninit(&c->decoder);
@@ -429,33 +418,3 @@ void Channel_SetPan(int index, float pan)
         ma_sound_set_pan(&c->sound_handle, pan);
     }
 }
-
-#if 0
-int main()
-{
-    return 0;
-#if 0
-    Sound *sound;
-    int i;
-
-    Audio_Init();
-    sound = Sound_Load("test/blade.wav");
-
-    for(i = 0; i < 1; i++)
-    {
-        Channel_SetPitch(1, 0.5);
-        Channel_SetPan(1, 0.5);
-        Channel_Start(1, sound, 5);
-        ma_sleep(500);
-        Channel_Start(2, sound, -1);
-    }
-
-    for(;;)
-    {
-        ma_sleep(1000);
-    }
-
-    return 0;
-#endif
-}
-#endif
