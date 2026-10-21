@@ -2,6 +2,16 @@
 // Loading ma_sound from memory:
 // https://gist.github.com/p1xelHer0/abed4728096ea3a88af7802cbe46cf08
 
+// Always include asserts!
+#ifdef NDEBUG
+#undef NDEBUG
+#include <assert.h>
+#define NDEBUG
+#else
+#include <assert.h>
+#endif
+
+
 
 #define alloc_pointer(p) p = xalloc(sizeof *p)
 #define GET_DECODER_CONFIG() const ma_decoder_config *decoder_config = &sound_config.decoder_config
@@ -15,7 +25,7 @@
 
 #define ZERO_OBJECT(p) memset(p, 0, sizeof(*(p)))
 
-#include "sound_api.h"
+#include "sound_lib.h"
 
 
 Sound_Config sound_config;
@@ -352,7 +362,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
         c->status = SOUND_CHANNEL_STATUS_PLAYING;
         c->index = channel_index;
         c->loop_count = loop_count;
-        ma_decoder_init_memory(sound->data, sound->size, decoder_config, &c->decoder);
+        CHECK(ma_decoder_init_memory(sound->data, sound->size, decoder_config, &c->decoder));
 
         // The decoder needs a reference back to the channel so that we can use it in cb_on_get_next()
         // This controls the looping behaviour

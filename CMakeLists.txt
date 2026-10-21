@@ -12,7 +12,7 @@ endif()
 
 set(TEST_TARGETS)
 
-set(SOUND_SOURCES main.c miniaudio.c extras/stb_vorbis.c)
+set(SOUND_SOURCES sound_lib.c miniaudio.c extras/stb_vorbis.c)
 set(TEST_SOURCES test.c)
 add_library(sound_lib SHARED ${SOUND_SOURCES})
 target_link_libraries(sound_lib PRIVATE ${SHARED_LIBS})

@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <assert.h>
-
 #include "miniaudio.h"
 
 
