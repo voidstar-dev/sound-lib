@@ -102,7 +102,7 @@ Sound_Channel *Sound_FindFreeChannelPointer(int index_in, int *index_out)
     }
 
     *index_out = index;
-    
+
     return result;
 }
 
@@ -180,7 +180,30 @@ Sound *Sound_Alloc()
 {
     Sound *result;
     alloc_pointer(result);
-    return result; 
+    return result;
+}
+
+// It doesn't make much sense for us to duplicate the data, but I'm going for an OpenAL approach here where we
+// allow the caller to free the data after it has been passed to us
+Sound *Sound_LoadFromMemory(const void *data, ma_uint32 size)
+{
+    Sound *result;
+    void *sound_data;
+
+    if(!data || !size)
+    {
+        return NULL;
+    }
+
+    result = Sound_Alloc();
+    sound_data = malloc(size);
+    memcpy(sound_data, data, size);
+
+    result->data = sound_data;
+    result->size = size;
+    result->allocation_type = SOUND_ALLOCATION_MALLOC;
+
+    return result;
 }
 
 Sound *Sound_Load(const char *filepath)
@@ -209,6 +232,7 @@ Sound *Sound_Load(const char *filepath)
     sound = Sound_Alloc();
     sound->data = data;
     sound->size = size;
+    sound->allocation_type = SOUND_ALLOCATION_MALLOC;
 
     return sound;
 }
@@ -232,7 +256,17 @@ void Sound_Free(Sound *sound)
         }
     }
 
-    free(sound->data);
+    switch(sound->allocation_type)
+    {
+        case SOUND_ALLOCATION_MALLOC:
+            free(sound->data);
+        break;
+
+        default:
+            assert(false && "Unhandled allocation in Sound_Free()");
+        break;
+    }
+
     ZERO_OBJECT(sound);
 
     Audio_DeviceUnlock();
@@ -333,7 +367,7 @@ int Channel_Start(int channel_index, Sound *sound, int loop_count)
 
         // The decoder needs a reference back to the channel so that we can use it in cb_on_get_next()
         // This controls the looping behaviour
-        c->decoder.pUserData = c; 
+        c->decoder.pUserData = c;
         c->sound = sound;
 
         flags = MA_SOUND_FLAG_STREAM;
@@ -420,7 +454,7 @@ int main()
     {
         ma_sleep(1000);
     }
-	
+
     return 0;
 #endif
 }

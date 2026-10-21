@@ -14,11 +14,22 @@
 #define SOUND_CHANNEL_STATUS_STOPPED 3
 #define SOUND_CHANNEL_COUNT 32
 
+#define SOUND_ALLOCATION_NONE 0
+#define SOUND_ALLOCATION_MALLOC 1
+
 typedef struct
 {
     // Private data, do not touch!
+
+    // Raw data of the file
     void *data;
+
+    // The size of the file
     size_t size;
+
+    // How this data was allocated
+    int allocation_type;
+
 } Sound;
 
 typedef struct
@@ -68,6 +79,7 @@ bool Audio_Init();
 void Audio_DeviceLock();
 void Audio_DeviceUnlock();
 Sound *Sound_Load(const char *filepath);
+Sound *Sound_LoadFromMemory(const void *data, ma_uint32 size);
 void Sound_Free(Sound *sound);
 
 int Channel_Stop(int channel_index);
