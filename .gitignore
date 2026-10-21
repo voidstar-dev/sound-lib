@@ -5,3 +5,6 @@ current
 log.txt
 tags
 test_*
+build_*/
+build_*/
+bin_*
