@@ -143,6 +143,7 @@ int main()
         mid_x = window_w / 2;
         mid_y = window_h / 2;
 
+        // Constrain mouse to the window size
         // Off by 1 error on the max value??
         if(mouse_x < 0) mouse_x = 0;
         if(mouse_x > window_w) mouse_x = window_w;
@@ -165,8 +166,8 @@ int main()
         // Remap to from [0, 1] to [-1, 1]
         pan = px * 2 - 1;
 
-        // Remap from [0, 1] to [0.5, 1]
-        pitch = py * 0.5 + 0.5;
+        // Remap from [0, 1] to [0.5, 1.5]
+        pitch = py + 0.5;
 
         // Pan rect colors
         pan_shade_left  =  saturate(1 - pan) *  0x80;
@@ -174,13 +175,14 @@ int main()
         pan_color1.r = pan_shade_left;
         pan_color2.r = pan_shade_right;
 
+        // Perform the actual mixing modifications
         Channel_SetPan(target_channel, pan);
         Channel_SetPitch(target_channel, pitch);
 
+        // Draw
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0xFF);
         SDL_RenderClear(renderer);
 
-        // Draw our rectangles
         draw_centered_rect_with_border(renderer, mid_x, mid_y, rect_radius * 2, border_color, 4);
         draw_centered_rect(renderer, mid_x, mid_y, rect_radius, color1);
         draw_centered_rect(renderer, 0 + (rect_radius * 2), mid_y, rect_radius, pan_color1);
