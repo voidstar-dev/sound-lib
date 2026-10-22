@@ -1,8 +1,18 @@
+/*
+   A test application that demonstrates the following capabilities:
+   - Sound loading / playback
+   - Panning
+   - Pitch
+   - Volume
+   - Sound looping
+ 
+   Uses SDL2
+   We're not planning to ship SDL2 here, so this is not required to compile
+
+*/
+
 #include <SDL2/SDL.h>
 #include "sound_lib.h"
-
-// Uses SDL2
-// We're not planning to ship SDL2 here, so this is not required to compile
 
 void compute_centered_rect(SDL_Rect *rect, int x, int y, int w, int h)
 {
@@ -64,6 +74,18 @@ float calculate_volume(int mouse_x, SDL_Rect rect)
     return volume;
 }
 
+void compute_volume_indicator_rect(SDL_Rect *rect, SDL_Rect volume_rect, SDL_Rect volume_indicator_rect, float volume)
+{
+    SDL_Rect tmp = volume_indicator_rect;
+    int w = volume_indicator_rect.w;
+    int w2 = volume_rect.w;
+    int space = (w2 - w);
+    int x = space * volume;
+    tmp.x = volume_rect.x + x;
+
+    *rect = tmp;
+}
+
 void draw_volume_control(SDL_Renderer *renderer, SDL_Rect volume_rect, SDL_Rect volume_indicator_rect, float volume, int volume_hovered, int volume_rect_pressed)
 {
     int vol_shade;
@@ -81,12 +103,8 @@ void draw_volume_control(SDL_Renderer *renderer, SDL_Rect volume_rect, SDL_Rect 
 
     // Compute volume indicator rect position
     {
-        SDL_Rect tmp = volume_indicator_rect;
-        int w = volume_indicator_rect.w;
-        int w2 = volume_rect.w;
-        int space = (w2 - w);
-        int x = space * volume;
-        tmp.x = volume_rect.x + x;
+        SDL_Rect tmp;
+        compute_volume_indicator_rect(&tmp, volume_rect, volume_indicator_rect, volume);
         SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
         SDL_RenderFillRect(renderer, &tmp);
     }
@@ -168,9 +186,11 @@ int main()
         int mouse_dx = 0, mouse_dy = 0;
         int vol_shade = 0xFF;
         int volume_hovered = 0;
+        int mouse_radius = rect_radius - 10;
 
-        compute_centered_rect(&mouse_rect, mouse_x, mouse_y, rect_radius * 2, rect_radius * 2);
+        compute_centered_rect(&mouse_rect, mouse_x, mouse_y, mouse_radius * 2, mouse_radius * 2);
 
+        // This blocks until we get an event. Very important for getting a responsive UI.
         SDL_WaitEvent(0);
 
         while(SDL_PollEvent(&event))
@@ -183,15 +203,20 @@ int main()
 
                 case SDL_MOUSEMOTION:
                 {
-                    SDL_Rect *a = &mouse_rect;
-                    SDL_Rect *b = &volume_rect;
-
-                    mouse_dx += event.motion.xrel;
-                    mouse_dy += event.motion.yrel;
-
-                    if(SDL_HasIntersection(a, b))
+                    SDL_Rect tmp;
+                    compute_volume_indicator_rect(&tmp, volume_rect, volume_indicator_rect, volume);
                     {
-                        volume_hovered = 1;
+                        SDL_Rect *a = &mouse_rect;
+                        SDL_Rect *b = &volume_rect;
+                        SDL_Rect *c = &tmp;
+
+                        mouse_dx += event.motion.xrel;
+                        mouse_dy += event.motion.yrel;
+
+                        if(SDL_HasIntersection(a, b) || SDL_HasIntersection(a, c))
+                        {
+                            volume_hovered = 1;
+                        }
                     }
                 }
 
@@ -215,12 +240,17 @@ int main()
 
                     if(lmb_held)
                     {
-                        SDL_Rect *a = &mouse_rect;
-                        SDL_Rect *b = &volume_rect;
-                        SDL_Rect *c = &volume_indicator_rect;
-                        if(SDL_HasIntersection(a, b) || SDL_HasIntersection(a, c))
+                        // Check with the entire volume control
+                        SDL_Rect tmp;
+                        compute_volume_indicator_rect(&tmp, volume_rect, volume_indicator_rect, volume);
                         {
-                            volume_rect_pressed = 1;
+                            SDL_Rect *a = &mouse_rect;
+                            SDL_Rect *b = &volume_rect;
+                            SDL_Rect *c = &tmp;
+                            if(SDL_HasIntersection(a, b) || SDL_HasIntersection(a, c))
+                            {
+                                volume_rect_pressed = 1;
+                            }
                         }
                     }
                     else
@@ -291,11 +321,10 @@ int main()
         draw_volume_control(renderer, volume_rect, volume_indicator_rect, volume, volume_hovered, volume_rect_pressed);
 
         // The cursor rect
-        draw_centered_rect(renderer, mouse_x, mouse_y, rect_radius - 10, color2);
+        draw_centered_rect(renderer, mouse_x, mouse_y, mouse_radius, color2);
 
         SDL_RenderPresent(renderer);
     }
 
-	
     return 0;
 }
