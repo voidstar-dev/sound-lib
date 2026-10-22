@@ -30,13 +30,18 @@ typedef struct
 
 } Sound_Buffer;
 
+typedef struct Sound Sound;
+
 typedef struct
 {
     ma_decoder decoder;
     ma_sound sound_handle;
 
-    // The sound that's currently playing on this channel
+    // The buffer that's currently playing on this channel
     Sound_Buffer *buffer;
+
+    // The sound that's currently playing on this channel
+    Sound *sound;
 
     // Playing status (SOUND_CHANNEL_STATUS_*)
     int status;
@@ -57,6 +62,20 @@ typedef struct
     float pitch;
 
 } Sound_Channel;
+
+
+typedef struct Sound
+{
+    struct Sound_Channel *channel;
+    Sound_Buffer *buffer;
+
+    float volume;
+    float pan;
+    float pitch;
+
+} Sound;
+
+
 
 typedef struct
 {
@@ -84,6 +103,10 @@ int Channel_Stop(int channel_index);
 int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count);
 void Channel_SetVolume(int index, float volume);
 void Channel_SetPan(int index, float pan);
+
+Sound *Sound_Load(const char *filepath);
+void Sound_Play(Sound *sound);
+void Sound_Stop(Sound *sound);
 
 
 // Not officially part of the API

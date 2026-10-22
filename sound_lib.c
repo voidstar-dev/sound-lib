@@ -326,8 +326,7 @@ ma_data_source *cb_on_get_next(ma_data_source *data_source)
     return next;
 }
 
-// Todo: What do we do on a null sound pointer?
-int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count)
+static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound)
 {
     Sound_Channel *c = 0;
     int index_out = -1;
@@ -368,6 +367,7 @@ int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count)
         // This controls the looping behaviour
         c->decoder.pUserData = c;
         c->buffer = buffer;
+        c->sound = sound;
 
         flags = MA_SOUND_FLAG_STREAM;
 
@@ -392,11 +392,61 @@ int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count)
     return index_out;
 }
 
-#if 0
-// Todo: Make this work again with a Sound struct
-int Sound_Play(Sound_Buffer *buffer, int channel, int loop_count)
+// Todo: What do we do on a null sound pointer?
+int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count)
 {
-    return Channel_Start(channel, sound, loop_count);
+    return Channel_StartInternal(channel_index, buffer, loop_count, 0);
+}
+
+void Sound_Free(Sound *sound)
+{
+    // Fixme!!! Free the pointer for the channel as well.
+    if(!sound) return;
+
+    SoundBuffer_Free(sound->buffer);
+    ZERO_OBJECT(sound);
+    free(sound);
+}
+
+Sound *Sound_Load(const char *filepath)
+{
+    Sound *result;
+
+
+    alloc_pointer(result);
+    if(result)
+    {
+        result->buffer = SoundBuffer_Load(filepath);
+        result->volume = 1;
+        result->pan = 0;
+        result->pitch = 1;
+
+        if(!result->buffer)
+        {
+            Sound_Free(result);
+            result = 0;
+            goto fail;
+        }
+    }
+
+
+    return result;
+
+fail:
+    return result;
+}
+
+#if 1
+// Todo: Make this work again with a Sound struct
+void Sound_Play(Sound *sound)
+{
+    int channel = 0;
+    int loop_count = 0;
+    Sound_Channel *c = Sound_FindFreeChannelPointer(-1, &channel);
+    if(c)
+    {
+        Channel_StartInternal(channel, sound->buffer, loop_count, sound);
+    }
 }
 #endif
 
