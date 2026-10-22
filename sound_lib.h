@@ -103,6 +103,7 @@ int Channel_Stop(int channel_index);
 int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count);
 void Channel_SetVolume(int index, float volume);
 void Channel_SetPan(int index, float pan);
+void Channel_SetPitch(int index, float pitch);
 
 Sound *Sound_Load(const char *filepath);
 void Sound_Play(Sound *sound);
