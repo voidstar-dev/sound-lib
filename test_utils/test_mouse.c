@@ -110,7 +110,7 @@ void draw_volume_control(SDL_Renderer *renderer, SDL_Rect volume_rect, SDL_Rect 
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -134,6 +134,11 @@ int main()
 
     SDL_Init(SDL_INIT_VIDEO);
     Audio_Init();
+
+    if(argc > 1)
+    {
+        filename = argv[1];
+    }
 
 
     window = SDL_CreateWindow(
