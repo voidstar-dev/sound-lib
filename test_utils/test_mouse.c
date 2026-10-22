@@ -39,8 +39,8 @@ void draw_centered_rect_with_border(SDL_Renderer *renderer, int x, int y, int ra
         rect.w -1;
         rect.h -1;
     }
-
 }
+
 float saturate(float f)
 {
     if(f < 0) f = 0;
@@ -62,6 +62,34 @@ float calculate_volume(int mouse_x, SDL_Rect rect)
     volume = saturate(volume);
 
     return volume;
+}
+
+void draw_volume_control(SDL_Renderer *renderer, SDL_Rect volume_rect, SDL_Rect volume_indicator_rect, float volume, int volume_hovered, int volume_rect_pressed)
+{
+    int vol_shade;
+    // Volume rect
+    if(volume_hovered && !volume_rect_pressed)
+    {
+        vol_shade = 0x90;
+    }
+    else
+    {
+        vol_shade = volume_rect_pressed ? 0xCC : 0x60;
+    }
+    SDL_SetRenderDrawColor(renderer, vol_shade, vol_shade, vol_shade, 0xFF);
+    SDL_RenderFillRect(renderer, &volume_rect);
+
+    // Compute volume indicator rect position
+    {
+        SDL_Rect tmp = volume_indicator_rect;
+        int w = volume_indicator_rect.w;
+        int w2 = volume_rect.w;
+        int space = (w2 - w);
+        int x = space * volume;
+        tmp.x = volume_rect.x + x;
+        SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+        SDL_RenderFillRect(renderer, &tmp);
+    }
 }
 
 int main()
@@ -260,31 +288,7 @@ int main()
         draw_centered_rect(renderer, mid_x, mid_y, rect_radius, color1);
         draw_centered_rect(renderer, 0 + (rect_radius * 2), mid_y, rect_radius, pan_color1);
         draw_centered_rect(renderer, window_w - (rect_radius * 2), mid_y, rect_radius, pan_color2);
-
-        // Volume rect
-        if(volume_hovered && !volume_rect_pressed)
-        {
-            vol_shade = 0x90;
-        }
-        else
-        {
-            vol_shade = volume_rect_pressed ? 0xCC : 0x60;
-        }
-        SDL_SetRenderDrawColor(renderer, vol_shade, vol_shade, vol_shade, 0xFF);
-        SDL_RenderFillRect(renderer, &volume_rect);
-
-        // Compute volume indicator rect position
-        {
-            SDL_Rect tmp = volume_indicator_rect;
-            int w = volume_indicator_rect.w;
-            int w2 = volume_rect.w;
-            int space = (w2 - w);
-            int x = space * volume;
-            tmp.x = volume_rect.x + x;
-            SDL_SetRenderDrawColor(renderer, 0xFF, 0xFF, 0xFF, 0xFF);
-            SDL_RenderFillRect(renderer, &tmp);
-        }
-
+        draw_volume_control(renderer, volume_rect, volume_indicator_rect, volume, volume_hovered, volume_rect_pressed);
 
         // The cursor rect
         draw_centered_rect(renderer, mouse_x, mouse_y, rect_radius - 10, color2);
