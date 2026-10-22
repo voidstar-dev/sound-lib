@@ -28,7 +28,7 @@ typedef struct
     // How this data was allocated
     int allocation_type;
 
-} Sound;
+} Sound_Buffer;
 
 typedef struct
 {
@@ -36,7 +36,7 @@ typedef struct
     ma_sound sound_handle;
 
     // The sound that's currently playing on this channel
-    Sound *sound;
+    Sound_Buffer *buffer;
 
     // Playing status (SOUND_CHANNEL_STATUS_*)
     int status;
@@ -76,13 +76,12 @@ typedef struct
 bool Audio_Init();
 void Audio_DeviceLock();
 void Audio_DeviceUnlock();
-Sound *Sound_Load(const char *filepath);
-Sound *Sound_LoadFromMemory(const void *data, ma_uint32 size);
-void Sound_Free(Sound *sound);
+Sound_Buffer *SoundBuffer_Load(const char *filepath);
+Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
+void SoundBuffer_Free(Sound_Buffer *sound);
 
 int Channel_Stop(int channel_index);
-int Channel_Start(int channel_index, Sound *sound, int loop_count);
-int Sound_Play(Sound *sound, int channel, int loop_count);
+int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count);
 void Channel_SetVolume(int index, float volume);
 void Channel_SetPan(int index, float pan);
 

@@ -27,15 +27,15 @@ int main()
 
     const char *sfx_file = MA_XSTRINGIFY(BASE_SFX_NAME)"."MA_XSTRINGIFY(EXT_NAME);
     const char *mus_file = MA_XSTRINGIFY(BASE_MUS_NAME)"."MA_XSTRINGIFY(EXT_NAME);
-    Sound *sfx;
-    Sound *mus;
+    Sound_Buffer *sfx;
+    Sound_Buffer *mus;
     int i;
     int sleep_millis = 2000;
 
     Audio_Init();
 
-    sfx = Sound_Load(sfx_file);
-    mus = Sound_Load(mus_file);
+    sfx = SoundBuffer_Load(sfx_file);
+    mus = SoundBuffer_Load(mus_file);
 
     if(sfx)
     {
@@ -76,7 +76,7 @@ int main()
         ma_sleep(sleep_millis);
 
         // Test sound freeing
-        Sound_Free(mus);
+        SoundBuffer_Free(mus);
         ma_sleep(1000);
     }
 
