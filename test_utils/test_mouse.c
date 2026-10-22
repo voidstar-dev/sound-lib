@@ -17,6 +17,35 @@ void draw_centered_rect(SDL_Renderer *renderer, int x, int y, int radius, SDL_Co
     SDL_RenderFillRect(renderer, &rect);
 }
 
+void draw_centered_rect_with_border(SDL_Renderer *renderer, int x, int y, int radius, SDL_Color color, int border_size)
+{
+    SDL_Rect rect;
+    int i;
+
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    rect.x = x - radius;
+    rect.y = y - radius;
+    rect.w = radius * 2;
+    rect.h = radius * 2;
+
+    for(i = 0; i < border_size; i++)
+    {
+        SDL_RenderDrawRect(renderer, &rect);
+        rect.x += 1;
+        rect.y += 1;
+        rect.w -1;
+        rect.h -1;
+    }
+
+}
+float saturate(float f)
+{
+    if(f < 0) f = 0;
+    if(f > 1) f = 1;
+
+    return f;
+}
+
 int main()
 {
     SDL_Window *window;
@@ -29,6 +58,8 @@ int main()
     int channel_result;
     SDL_Color color1 = {0x00, 0xFF, 0x00, 0xFF};
     SDL_Color color2 = {0x00, 0x00, 0xFF, 0xFF};
+    int first_mouse = 1;
+    int window_w, window_h;
 
     SDL_Init(SDL_INIT_VIDEO);
     Audio_Init();
@@ -53,6 +84,11 @@ int main()
     }
 
     SDL_ShowWindow(window);
+    SDL_GetMouseState(&mouse_x, &mouse_y);
+    SDL_GetWindowSize(window, &window_w, &window_h);
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    mouse_x = window_w / 2;
+    mouse_y = window_h / 2;
 
     if(Channel_Start(target_channel, buffer, -1) != target_channel)
     {
@@ -60,16 +96,21 @@ int main()
         exit(0);
     }
 
-    SDL_GetMouseState(&mouse_x, &mouse_y);
-    SDL_SetRelativeMouseMode(SDL_TRUE);
     for(;;)
     {
         SDL_Event event;
-        int window_w, window_h;
         float px, py;
         int scancode;
         float pan, pitch;
         int rect_radius = 30;
+        SDL_Color border_color;
+        SDL_Color pan_color1 = {0};
+        SDL_Color pan_color2 = {0};
+        unsigned int pan_shade_left, pan_shade_right;
+        unsigned int border_shade = 0x80;
+        unsigned int border_pixel;
+        int mid_x, mid_y;
+        int mouse_dx = 0, mouse_dy = 0;
 
         SDL_WaitEvent(0);
 
@@ -82,8 +123,8 @@ int main()
                 break;
 
                 case SDL_MOUSEMOTION:
-                    mouse_x = event.motion.x;
-                    mouse_y = event.motion.y;
+                    mouse_dx += event.motion.xrel;
+                    mouse_dy += event.motion.yrel;
                 break;
 
                 case SDL_KEYDOWN:
@@ -95,16 +136,43 @@ int main()
                 break;
             }
         }
+        mouse_x += mouse_dx;
+        mouse_y += mouse_dy;
 
         SDL_GetWindowSize(window, &window_w, &window_h);
+        mid_x = window_w / 2;
+        mid_y = window_h / 2;
+
+        // Off by 1 error on the max value??
+        if(mouse_x < 0) mouse_x = 0;
+        if(mouse_x > window_w) mouse_x = window_w;
+
+        if(mouse_y < 0) mouse_y = 0;
+        if(mouse_y > window_h) mouse_y = window_h;
+
+        // Normalize mouse coordinates
         px = (float)mouse_x / (float)window_w;
         py = 1 - ((float)mouse_y / (float)window_h); // Invert y
+
+        // Calculate "pitch" color
+        border_pixel = border_shade * py + 0x40;
+        border_color.r = border_pixel;
+        border_color.g = border_pixel;
+        border_color.b = border_pixel;
+        border_color.a = 0xFF;
+
 
         // Remap to from [0, 1] to [-1, 1]
         pan = px * 2 - 1;
 
         // Remap from [0, 1] to [0.5, 1]
         pitch = py * 0.5 + 0.5;
+
+        // Pan rect colors
+        pan_shade_left  =  saturate(1 - pan) *  0x80;
+        pan_shade_right = saturate(1 + pan)  * 0x80;
+        pan_color1.r = pan_shade_left;
+        pan_color2.r = pan_shade_right;
 
         Channel_SetPan(target_channel, pan);
         Channel_SetPitch(target_channel, pitch);
@@ -113,8 +181,13 @@ int main()
         SDL_RenderClear(renderer);
 
         // Draw our rectangles
-        draw_centered_rect(renderer, window_w / 2, window_h / 2, rect_radius, color1);
-        draw_centered_rect(renderer, mouse_x, mouse_y, rect_radius, color2);
+        draw_centered_rect_with_border(renderer, mid_x, mid_y, rect_radius * 2, border_color, 4);
+        draw_centered_rect(renderer, mid_x, mid_y, rect_radius, color1);
+        draw_centered_rect(renderer, 0 + (rect_radius * 2), mid_y, rect_radius, pan_color1);
+        draw_centered_rect(renderer, window_w - (rect_radius * 2), mid_y, rect_radius, pan_color2);
+
+        // The cursor rect
+        draw_centered_rect(renderer, mouse_x, mouse_y, rect_radius - 10, color2);
 
         SDL_RenderPresent(renderer);
     }
