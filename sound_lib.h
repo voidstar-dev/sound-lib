@@ -117,10 +117,10 @@ SOUNDAPI void Channel_SetPan(int index, float pan);
 SOUNDAPI void Channel_SetPitch(int index, float pitch);
 
 
-// Incomplete for now
-Sound *Sound_Load(const char *filepath);
-void Sound_Play(Sound *sound);
-void Sound_Stop(Sound *sound);
+// Incomplete for now, do not use!
+SOUNDAPI Sound *Sound_Load(const char *filepath);
+SOUNDAPI void Sound_Play(Sound *sound);
+SOUNDAPI void Sound_Stop(Sound *sound);
 
 #ifdef SOUND_TEST_PROGRAM
 

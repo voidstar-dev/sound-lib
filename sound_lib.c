@@ -72,7 +72,6 @@ static void InitChannels();
 
 bool Audio_Init()
 {
-
     int rate = 44100;
     int channels = 2;
     ma_format format = ma_format_f32;
@@ -84,7 +83,7 @@ bool Audio_Init()
     sound_config.format    = format;
     ma_mutex_init(&sound_config.mutex);
 
-    // Finally, init the config that all decoders from this point on will use.
+    // Init the config that all decoders from this point on will use.
     sound_config.decoder_config = ma_decoder_config_init(sound_config.format, sound_config.channels, sound_config.rate);
 
     device_config = ma_device_config_init(ma_device_type_playback);
@@ -110,16 +109,6 @@ bool Audio_Init()
 // ==================================================================
 // Section: [SoundBuffer]
 // ==================================================================
-
-size_t get_file_size(FILE *fp)
-{
-    struct stat buf = {0};
-
-    int fd = fileno(fp);
-    fstat(fd, &buf);
-    return buf.st_size;
-}
-
 Sound_Buffer *SoundBuffer_Alloc()
 {
     Sound_Buffer *result;
@@ -129,7 +118,7 @@ Sound_Buffer *SoundBuffer_Alloc()
 
 // It doesn't make much sense for us to duplicate the data, but I'm going for an OpenAL approach here where we
 // allow the caller to free the data after it has been passed to us
-Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size)
+SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size)
 {
     Sound_Buffer *result;
     void *sound_data;
@@ -150,7 +139,16 @@ Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size)
     return result;
 }
 
-Sound_Buffer *SoundBuffer_Load(const char *filepath)
+static size_t get_file_size(FILE *fp)
+{
+    struct stat buf = {0};
+
+    int fd = fileno(fp);
+    fstat(fd, &buf);
+    return buf.st_size;
+}
+
+SOUNDAPI Sound_Buffer *SoundBuffer_Load(const char *filepath)
 {
     FILE *fp = fopen(filepath, "rb");
     void *data = 0;
@@ -181,7 +179,7 @@ Sound_Buffer *SoundBuffer_Load(const char *filepath)
     return buffer;
 }
 
-void SoundBuffer_Free(Sound_Buffer *buffer)
+SOUNDAPI void SoundBuffer_Free(Sound_Buffer *buffer)
 {
     int i;
     Sound_Channel *c;
@@ -470,7 +468,7 @@ SOUNDAPI void Channel_SetPan(int index, float pan)
 // ==================================================================
 
 // Todo: Make this work again with a Sound struct
-void Sound_Play(Sound *sound)
+SOUNDAPI void Sound_Play(Sound *sound)
 {
     int channel = 0;
     int loop_count = 0;
@@ -484,7 +482,7 @@ void Sound_Play(Sound *sound)
     }
 }
 
-void Sound_Stop(Sound *sound)
+SOUNDAPI void Sound_Stop(Sound *sound)
 {
     if(!sound) return;
 
@@ -501,7 +499,7 @@ void Sound_Stop(Sound *sound)
     sound->status = SOUND_STATUS_STOPPED;
 }
 
-void Sound_Free(Sound *sound)
+SOUNDAPI void Sound_Free(Sound *sound)
 {
     // Fixme!!! Free the pointer for the channel as well.
     if(!sound) return;
@@ -516,7 +514,7 @@ void Sound_Free(Sound *sound)
     free(sound);
 }
 
-Sound *Sound_Load(const char *filepath)
+SOUNDAPI Sound *Sound_Load(const char *filepath)
 {
     Sound *result = 0;
 
