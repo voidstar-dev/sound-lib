@@ -488,6 +488,25 @@ SOUNDAPI void Channel_SetPan(int index, float pan)
     }
 }
 
+SOUNDAPI bool Channel_IsPlaying(int index)
+{
+    Sound_Channel *c = 0;
+    bool result = false;
+
+    Audio_DeviceLock();
+
+    c = GetChannel(index);
+    if(c)
+    {
+        result = c->status == SOUND_STATUS_PLAYING;
+    }
+
+    Audio_DeviceUnlock();
+
+    return result;
+
+}
+
 // ==================================================================
 // Section: [Sound]
 // ==================================================================

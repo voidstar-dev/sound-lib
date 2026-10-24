@@ -116,6 +116,7 @@ SOUNDAPI int Channel_Stop(int channel_index);
 SOUNDAPI void Channel_SetVolume(int index, float volume);
 SOUNDAPI void Channel_SetPan(int index, float pan);
 SOUNDAPI void Channel_SetPitch(int index, float pitch);
+SOUNDAPI bool Channel_IsPlaying(int index);
 
 
 // Incomplete for now, do not use!
