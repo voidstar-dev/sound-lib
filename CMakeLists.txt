@@ -1,34 +1,63 @@
 cmake_minimum_required(VERSION 3.1)
 project(sound_lib)
 
+
 if(UNIX AND NOT APPLE)
-    set(BIN_DIR bin_linux)
     set(SHARED_LIBS m pthread dl)
-    set(COMMON_WARNINGS -Wdeclaration-after-statement -Werror)
-
+    set(LINUX TRUE)
 endif()
 
-if(MINGW OR WINDOWS)
-    set(BIN_DIR bin_win)
+if(MINGW OR LINUX)
+    list(APPEND COMMON_WARNINGS -Wdeclaration-after-statement -Wreturn-type -Wattributes -Werror)
 endif()
 
-set(TEST_TARGETS)
+if(MINGW)
+    # We want a static version of gcc to avoid including extra dlls in the distribution
+    list(APPEND WIN32_CFLAGS -static-libgcc)
+    list(APPEND WIN32_LINKER_FLAGS -static-libgcc)
+endif()
 
+# Installation directories
+# Not entirely correct, we may be building 32-bits
 
+if(MINGW)
+    set(BIN_DIR bin_mingw_x64)
+endif()
+
+if(LINUX)
+    set(BIN_DIR bin_linux_x64)
+endif()
+
+if(MSVC)
+    set(BIN_DIR bin_msvc_x64)
+endif()
+
+# We only need this to compile the visual test programs
+find_package(SDL2 QUIET)
+
+# The library itself
 set(SOUND_SOURCES sound_lib.c miniaudio.c extras/stb_vorbis.c)
 set(TEST_SOURCES test.c)
 add_library(sound_lib SHARED ${SOUND_SOURCES})
 target_link_libraries(sound_lib PRIVATE ${SHARED_LIBS})
-target_compile_options(sound_lib PRIVATE ${COMMON_WARNINGS})
+target_compile_options(sound_lib PRIVATE ${COMMON_WARNINGS} ${WIN32_CFLAGS})
+target_link_options(sound_lib PRIVATE ${WIN32_LINKER_FLAGS})
+
+# If we're using mingw, keep to the Windows library conventions
+# https://stackoverflow.com/questions/31038963/how-do-you-rename-a-library-filename-in-cmake
+if(MINGW)
+    set_target_properties(sound_lib PROPERTIES PREFIX "")
+endif()
 
 
-
+# Test program defines
+list(APPEND TEST_DEFS SOUND_TEST_PROGRAM)
 
 # Builds a collection of test executables that try out different file extensions
 macro(build_test name)
     string(TOUPPER ${name} DEF_NAME)
     add_executable(${name} ${TEST_SOURCES})
-    target_compile_definitions(${name} PRIVATE ${DEF_NAME})
+    target_compile_definitions(${name} PRIVATE ${DEF_NAME} ${TEST_DEFS})
     target_link_libraries(${name} PRIVATE sound_lib)
     list(APPEND TEST_TARGETS ${name})
 endmacro()
@@ -41,11 +70,14 @@ build_test(test_flac)
 
 
 # Some more test utilities
-add_executable(test_mouse test_utils/test_mouse.c)
-target_include_directories(test_mouse PRIVATE .)
-target_link_libraries(test_mouse SDL2 sound_lib)
-target_compile_options(test_mouse PRIVATE ${COMMON_WARNINGS})
-list(APPEND TEST_TARGETS test_mouse)
+if(SDL2_FOUND)
+    add_executable(test_mouse test_utils/test_mouse.c)
+    target_include_directories(test_mouse PRIVATE .)
+    target_link_libraries(test_mouse SDL2 sound_lib)
+    target_compile_options(test_mouse PRIVATE ${COMMON_WARNINGS})
+    list(APPEND TEST_TARGETS test_mouse)
+endif()
 
+# How to install
 install(TARGETS sound_lib ${TEST_TARGETS} DESTINATION ${BIN_DIR})
 install(DIRECTORY test DESTINATION ${BIN_DIR})

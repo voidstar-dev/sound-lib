@@ -168,7 +168,7 @@ int main(int argc, char **argv)
     compute_centered_rect(&volume_rect, window_w / 2, window_h / 2 + 150, 300, 30);
     compute_centered_rect(&volume_indicator_rect, window_w / 2, window_h / 2 + 150, 30, 50);
 
-    if(Channel_Start(target_channel, buffer, -1) != target_channel)
+    if(Channel_Play(target_channel, buffer, -1) != target_channel)
     {
         printf("Could not start target channel %d\n", target_channel);
         exit(0);

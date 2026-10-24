@@ -10,5 +10,6 @@ if [ "$options" == "release" ]; then
 fi
 
 
-cmake -S . -B build_linux -G Ninja -DCMAKE_INSTALL_PREFIX=. -DCMAKE_INSTALL_RPATH=. $build_type
-cmake -S . -B build_win32 -G Ninja -DCMAKE_INSTALL_PREFIX=. -DCMAKE_INSTALL_RPATH=. -DCMAKE_TOOLCHAIN_FILE=toolchain_w32_x64.cmake $build_type
+cmake -S . -B build_linux_x64 -G Ninja -DCMAKE_INSTALL_PREFIX=. -DCMAKE_INSTALL_RPATH=. $build_type
+cmake -S . -B build_mingw_x64 -G Ninja -DCMAKE_INSTALL_PREFIX=. -DCMAKE_INSTALL_RPATH=. -DCMAKE_TOOLCHAIN_FILE=toolchain_w32_x64.cmake $build_type
+#cmake -S . -B build_mingw_x86 -G Ninja -DCMAKE_INSTALL_PREFIX=. -DCMAKE_INSTALL_RPATH=. -DCMAKE_TOOLCHAIN_FILE=toolchain_w32_x86.cmake $build_type

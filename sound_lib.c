@@ -43,6 +43,9 @@ static void *xalloc(size_t size)
     return calloc(size, 1);
 }
 
+// ==================================================================
+// Section: [Audio Device]
+// ==================================================================
 void Audio_DeviceLock()
 {
     ma_mutex_lock(&sound_config.mutex);
@@ -53,70 +56,7 @@ void Audio_DeviceUnlock()
     ma_mutex_unlock(&sound_config.mutex);
 }
 
-static bool ChannelIsAvailable(int status)
-{
-    return status == SOUND_CHANNEL_STATUS_STOPPED || status == SOUND_CHANNEL_STATUS_UNINITIALIZED;
-}
-
-// Returns -1 on error
-static int Sound_FindFreeChannel()
-{
-    int result = -1;
-    int i;
-
-    for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
-    {
-        Sound_Channel *c = &channels[i];
-        if(ChannelIsAvailable(c->status))
-        {
-            result = i;
-            break;
-        }
-    }
-
-    return result;
-}
-
-static Sound_Channel *Sound_GetChannel(int index)
-{
-    if(index >= 0 && index < SOUND_CHANNEL_COUNT)
-    {
-        return &channels[index];
-    }
-
-    return NULL;
-}
-
-
-Sound_Channel *Sound_FindFreeChannelPointer(int index_in, int *index_out)
-{
-    Sound_Channel *result = 0;
-    int index = -1;
-
-    if(index_in == -1)
-    {
-        index = Sound_FindFreeChannel();
-        result = Sound_GetChannel(index);
-    }
-    else
-    {
-        result = Sound_GetChannel(index_in);
-        if(ChannelIsAvailable(result->status))
-        {
-            index = index_in;
-        }
-        else
-        {
-            result = 0;
-        }
-    }
-
-    *index_out = index;
-
-    return result;
-}
-
-static void data_callback2(ma_device* pDevice, void* output, const void* input, ma_uint32 frame_count)
+static void cb_device_read_frames(ma_device* pDevice, void* output, const void* input, ma_uint32 frame_count)
 {
     GET_SOUND_ENGINE();
 
@@ -127,22 +67,12 @@ static void data_callback2(ma_device* pDevice, void* output, const void* input, 
     Audio_DeviceUnlock();
 }
 
-static void InitChannels()
-{
-    int i;
-    memset(channels, 0, sizeof(channels));
 
-    for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
-    {
-        Sound_Channel *c = &channels[i];
-        c->volume = 1;
-        c->pitch = 1;
-        c->pan = 0;
-    }
-}
+static void InitChannels();
 
 bool Audio_Init()
 {
+
     int rate = 44100;
     int channels = 2;
     ma_format format = ma_format_f32;
@@ -161,7 +91,7 @@ bool Audio_Init()
     device_config.playback.format   = format;
     device_config.playback.channels = channels;
     device_config.sampleRate        = rate;
-    device_config.dataCallback      = data_callback2;
+    device_config.dataCallback      = cb_device_read_frames;
 
     InitChannels();
 
@@ -176,6 +106,10 @@ bool Audio_Init()
 
     return true;
 }
+
+// ==================================================================
+// Section: [SoundBuffer]
+// ==================================================================
 
 size_t get_file_size(FILE *fp)
 {
@@ -282,35 +216,109 @@ void SoundBuffer_Free(Sound_Buffer *buffer)
     Audio_DeviceUnlock();
 }
 
-static void cb_channel_end(void *user_data, ma_sound *handle)
-{
-    // Fixme!!! Mutex
-    Sound_Channel *c = (Sound_Channel *)user_data;
-    c->status = SOUND_CHANNEL_STATUS_STOPPED;
-}
 
-
-static void Channel_FreeInternal(Sound_Channel *c)
+// ==================================================================
+// Section: [Channel]
+// ==================================================================
+static void InitChannels()
 {
-    ma_decoder_uninit(&c->decoder);
-    ma_sound_uninit(&c->sound_handle);
-}
+    int i;
+    memset(channels, 0, sizeof(channels));
 
-int Channel_Stop(int channel_index)
-{
-    Sound_Channel *c = Sound_GetChannel(channel_index);
-    if(c)
+    for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
     {
-        ma_sound_stop(&c->sound_handle);
-        c->status = SOUND_CHANNEL_STATUS_STOPPED;
+        Sound_Channel *c = &channels[i];
+        c->volume = 1;
+        c->pitch = 1;
+        c->pan = 0;
+        c->index = i;
+    }
+}
+
+static bool ChannelIsAvailable(int status)
+{
+    return status == SOUND_STATUS_STOPPED || status == SOUND_STATUS_UNINITIALIZED;
+}
+
+// Returns -1 on error
+static int FindFreeChannel()
+{
+    int result = -1;
+    int i;
+
+    for(i = 0; i < SOUND_CHANNEL_COUNT; i++)
+    {
+        Sound_Channel *c = &channels[i];
+        if(ChannelIsAvailable(c->status))
+        {
+            result = i;
+            break;
+        }
     }
 
+    return result;
+}
+
+static Sound_Channel *GetChannel(int index)
+{
+    if(index >= 0 && index < SOUND_CHANNEL_COUNT)
+    {
+        return &channels[index];
+    }
+
+    return NULL;
+}
+
+
+static Sound_Channel *FindFreeChannelPointer(int index_in, int *index_out)
+{
+    Sound_Channel *result = 0;
+    int index = -1;
+
+    if(index_in == -1)
+    {
+        index = FindFreeChannel();
+        result = GetChannel(index);
+    }
+    else
+    {
+        result = GetChannel(index_in);
+        if(ChannelIsAvailable(result->status))
+        {
+            index = index_in;
+        }
+        else
+        {
+            result = 0;
+        }
+    }
+
+    *index_out = index;
+
+    return result;
+}
+
+
+static void cb_channel_end(void *user_data, ma_sound *handle)
+{
+    // Note: This is called from the audio thread (cb_device_read_frames)
+    // so we don't need to lock the audio device here again
+    Sound_Channel *c = (Sound_Channel *)user_data;
+    c->status = SOUND_STATUS_STOPPED;
+
+    // Zero out this sound as well
+    if(c->sound)
+    {
+        c->sound->channel = 0;
+        c->sound->status = SOUND_STATUS_STOPPED;
+        c->sound = 0;
+    }
 }
 
 // This function is in charge of looping
 // We _do not_!!! call ma_sound_set_looping() or use MA_SOUND_FLAG_LOOPING
 // Instead, we manually keep track of the loop count ourselves.
-ma_data_source *cb_on_get_next(ma_data_source *data_source)
+static ma_data_source *cb_on_get_next(ma_data_source *data_source)
 {
     ma_decoder *decoder = (ma_decoder *)data_source;
     Sound_Channel *c = decoder->pUserData;
@@ -326,7 +334,9 @@ ma_data_source *cb_on_get_next(ma_data_source *data_source)
     return next;
 }
 
-static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound)
+static void Channel_FreeInternal(Sound_Channel *c);
+
+static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound)
 {
     Sound_Channel *c = 0;
     int index_out = -1;
@@ -335,11 +345,11 @@ static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int lo
 
     if(channel_index == -1)
     {
-        c = Sound_FindFreeChannelPointer(channel_index, &index_out);
+        c = FindFreeChannelPointer(channel_index, &index_out);
     }
     else
     {
-        c = Sound_GetChannel(channel_index);
+        c = GetChannel(channel_index);
 
         if(c)
         {
@@ -358,7 +368,7 @@ static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int lo
 
         Channel_FreeInternal(c);
 
-        c->status = SOUND_CHANNEL_STATUS_PLAYING;
+        c->status = SOUND_STATUS_PLAYING;
         c->index = channel_index;
         c->loop_count = loop_count;
         CHECK(ma_decoder_init_memory(buffer->data, buffer->size, decoder_config, &c->decoder));
@@ -384,6 +394,11 @@ static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int lo
         ma_sound_set_pan(&c->sound_handle, c->pan);
         ma_data_source_set_next_callback(data_source, cb_on_get_next);
 
+        if(c->sound)
+        {
+            c->sound->status = SOUND_STATUS_PLAYING;
+        }
+
         CHECK(ma_sound_start(&c->sound_handle));
     }
 
@@ -393,15 +408,108 @@ static int Channel_StartInternal(int channel_index, Sound_Buffer *buffer, int lo
 }
 
 // Todo: What do we do on a null sound pointer?
-int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count)
+SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count)
 {
-    return Channel_StartInternal(channel_index, buffer, loop_count, 0);
+    return Channel_PlayInternal(channel_index, buffer, loop_count, 0);
+}
+
+static void Channel_FreeInternal(Sound_Channel *c)
+{
+    ma_decoder_uninit(&c->decoder);
+    ma_sound_uninit(&c->sound_handle);
+}
+
+SOUNDAPI int Channel_Stop(int channel_index)
+{
+    Sound_Channel *c = GetChannel(channel_index);
+    if(c)
+    {
+        ma_sound_stop(&c->sound_handle);
+        c->status = SOUND_STATUS_STOPPED;
+    }
+
+    // Fixme!!! Correct return value.
+    return 0;
+}
+
+
+SOUNDAPI void Channel_SetPitch(int index, float pitch)
+{
+    Sound_Channel *c = GetChannel(index);
+
+    if(c)
+    {
+        c->pitch = pitch;
+        ma_sound_set_pitch(&c->sound_handle, pitch);
+    }
+}
+
+SOUNDAPI void Channel_SetVolume(int index, float volume)
+{
+    Sound_Channel *c = GetChannel(index);
+
+    if(c)
+    {
+        c->volume = volume;
+        ma_sound_set_volume(&c->sound_handle, volume);
+    }
+}
+
+SOUNDAPI void Channel_SetPan(int index, float pan)
+{
+    Sound_Channel *c = GetChannel(index);
+    if(c)
+    {
+        c->pan = pan;
+        ma_sound_set_pan(&c->sound_handle, pan);
+    }
+}
+
+// ==================================================================
+// Section: [Sound]
+// ==================================================================
+
+// Todo: Make this work again with a Sound struct
+void Sound_Play(Sound *sound)
+{
+    int channel = 0;
+    int loop_count = 0;
+    Sound_Channel *c = FindFreeChannelPointer(-1, &channel);
+    if(c)
+    {
+        Channel_SetVolume(channel, sound->volume);
+        Channel_SetPitch(channel, sound->pitch);
+        Channel_SetPan(channel, sound->pan);
+        Channel_PlayInternal(channel, sound->buffer, loop_count, sound);
+    }
+}
+
+void Sound_Stop(Sound *sound)
+{
+    if(!sound) return;
+
+    if(sound->channel)
+    {
+        // Make sure our channel is the correct one
+        assert(sound->channel->sound == sound);
+
+        // cb_channel_end will set the required data for this sound, and unlink it from the current channel
+        Channel_Stop(sound->channel->index);
+    }
+
+    // In case the calllback did not fire, we set the status here anyway
+    sound->status = SOUND_STATUS_STOPPED;
 }
 
 void Sound_Free(Sound *sound)
 {
     // Fixme!!! Free the pointer for the channel as well.
     if(!sound) return;
+
+    if(sound->channel)
+    {
+        Sound_Stop(sound);
+    }
 
     SoundBuffer_Free(sound->buffer);
     ZERO_OBJECT(sound);
@@ -410,8 +518,7 @@ void Sound_Free(Sound *sound)
 
 Sound *Sound_Load(const char *filepath)
 {
-    Sound *result;
-
+    Sound *result = 0;
 
     alloc_pointer(result);
     if(result)
@@ -434,50 +541,4 @@ Sound *Sound_Load(const char *filepath)
 
 fail:
     return result;
-}
-
-#if 1
-// Todo: Make this work again with a Sound struct
-void Sound_Play(Sound *sound)
-{
-    int channel = 0;
-    int loop_count = 0;
-    Sound_Channel *c = Sound_FindFreeChannelPointer(-1, &channel);
-    if(c)
-    {
-        Channel_StartInternal(channel, sound->buffer, loop_count, sound);
-    }
-}
-#endif
-
-void Channel_SetPitch(int index, float pitch)
-{
-    Sound_Channel *c = Sound_GetChannel(index);
-
-    if(c)
-    {
-        c->pitch = pitch;
-        ma_sound_set_pitch(&c->sound_handle, pitch);
-    }
-}
-
-void Channel_SetVolume(int index, float volume)
-{
-    Sound_Channel *c = Sound_GetChannel(index);
-
-    if(c)
-    {
-        c->volume = volume;
-        ma_sound_set_volume(&c->sound_handle, volume);
-    }
-}
-
-void Channel_SetPan(int index, float pan)
-{
-    Sound_Channel *c = Sound_GetChannel(index);
-    if(c)
-    {
-        c->pan = pan;
-        ma_sound_set_pan(&c->sound_handle, pan);
-    }
 }

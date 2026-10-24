@@ -4006,6 +4006,14 @@ typedef ma_uint16 wchar_t;
     #define MA_NO_INLINE
 #endif
 
+// Personal DLL addition for a handful of functions
+#ifdef _WIN32
+#define MA_CUSTOM_EXPORT __declspec(dllexport)
+#endif
+#ifndef MA_CUSTOM_EXPORT
+#define MA_CUSTOM_EXPORT
+#endif
+
 /* MA_DLL is not officially supported. You're on your own if you want to use this. */
 #if defined(MA_DLL)
     #if defined(_WIN32)
@@ -12021,7 +12029,7 @@ static void ma_sleep__posix(ma_uint32 milliseconds)
 }
 #endif
 
-void ma_sleep(ma_uint32 milliseconds)
+MA_CUSTOM_EXPORT void ma_sleep(ma_uint32 milliseconds)
 {
 #ifdef MA_WIN32
     ma_sleep__win32(milliseconds);

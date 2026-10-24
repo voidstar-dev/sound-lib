@@ -6,14 +6,22 @@
 #include "miniaudio.h"
 
 
-#define SOUND_CHANNEL_STATUS_UNINITIALIZED 0
-#define SOUND_CHANNEL_STATUS_PLAYING 1
-#define SOUND_CHANNEL_STATUS_PAUSED 2
-#define SOUND_CHANNEL_STATUS_STOPPED 3
+#define SOUND_STATUS_UNINITIALIZED 0
+#define SOUND_STATUS_PLAYING 1
+#define SOUND_STATUS_PAUSED 2
+#define SOUND_STATUS_STOPPED 3
 #define SOUND_CHANNEL_COUNT 32
 
 #define SOUND_ALLOCATION_NONE 0
 #define SOUND_ALLOCATION_MALLOC 1
+
+#ifdef _WIN32
+#define SOUNDAPI __declspec(dllexport)
+#endif
+
+#ifndef SOUNDAPI
+#define SOUNDAPI
+#endif
 
 typedef struct
 {
@@ -43,7 +51,7 @@ typedef struct
     // The sound that's currently playing on this channel
     Sound *sound;
 
-    // Playing status (SOUND_CHANNEL_STATUS_*)
+    // Playing status (SOUND_STATUS_*)
     int status;
 
     int loop_count;
@@ -66,12 +74,15 @@ typedef struct
 
 typedef struct Sound
 {
-    struct Sound_Channel *channel;
+    Sound_Channel *channel;
     Sound_Buffer *buffer;
 
     float volume;
     float pan;
     float pitch;
+
+    // SOUND_STATUS_*
+    int status;
 
 } Sound;
 
@@ -92,23 +103,28 @@ typedef struct
 
 } Sound_Config;
 
-bool Audio_Init();
-void Audio_DeviceLock();
-void Audio_DeviceUnlock();
-Sound_Buffer *SoundBuffer_Load(const char *filepath);
-Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
-void SoundBuffer_Free(Sound_Buffer *sound);
+SOUNDAPI bool Audio_Init();
+SOUNDAPI void Audio_DeviceLock();
+SOUNDAPI void Audio_DeviceUnlock();
+SOUNDAPI Sound_Buffer *SoundBuffer_Load(const char *filepath);
+SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
+SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
 
-int Channel_Stop(int channel_index);
-int Channel_Start(int channel_index, Sound_Buffer *buffer, int loop_count);
-void Channel_SetVolume(int index, float volume);
-void Channel_SetPan(int index, float pan);
-void Channel_SetPitch(int index, float pitch);
+SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
+SOUNDAPI int Channel_Stop(int channel_index);
+SOUNDAPI void Channel_SetVolume(int index, float volume);
+SOUNDAPI void Channel_SetPan(int index, float pan);
+SOUNDAPI void Channel_SetPitch(int index, float pitch);
 
+
+// Incomplete for now
 Sound *Sound_Load(const char *filepath);
 void Sound_Play(Sound *sound);
 void Sound_Stop(Sound *sound);
 
+#ifdef SOUND_TEST_PROGRAM
 
-// Not officially part of the API
-void ma_sleep(ma_uint32 milliseconds);
+// Not officially part of the API, but still needed for the test programs.
+SOUNDAPI void ma_sleep(ma_uint32 milliseconds);
+
+#endif
