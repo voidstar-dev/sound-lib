@@ -334,7 +334,7 @@ static ma_data_source *cb_on_get_next(ma_data_source *data_source)
 
 static void Channel_FreeInternal(Sound_Channel *c);
 
-static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound, int sample_rate, ma_format format)
+static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound, int sample_rate, ma_format format, int channels)
 {
     Sound_Channel *c = 0;
     int index_out = -1;
@@ -374,7 +374,7 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
         c->loop_count = loop_count;
 
 
-        // We can manually init the decoder here from a specified sampler rate / format
+        // We can manually init the decoder here from a specified sampler rate, format, and channel count
         if(sample_rate)
         {
             local_config.sampleRate = sample_rate;
@@ -382,6 +382,10 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
         if(format)
         {
             local_config.format = format;
+        }
+        if(channels)
+        {
+            local_config.channels = channels;
         }
 
 
@@ -424,12 +428,12 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
 // Todo: What do we do on a null sound pointer?
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count)
 {
-    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, 0, 0);
+    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, 0, 0, 0);
 }
 
-SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format)
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels)
 {
-    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, sample_rate, format);
+    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, sample_rate, format, channels);
 }
 
 static void Channel_FreeInternal(Sound_Channel *c)
@@ -499,7 +503,7 @@ SOUNDAPI void Sound_Play(Sound *sound)
         Channel_SetVolume(channel, sound->volume);
         Channel_SetPitch(channel, sound->pitch);
         Channel_SetPan(channel, sound->pan);
-        Channel_PlayInternal(channel, sound->buffer, loop_count, sound, 0, 0);
+        Channel_PlayInternal(channel, sound->buffer, loop_count, sound, 0, 0, 0);
     }
 }
 
