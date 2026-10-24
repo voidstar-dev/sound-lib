@@ -111,6 +111,7 @@ SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 si
 SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
 
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format);
 SOUNDAPI int Channel_Stop(int channel_index);
 SOUNDAPI void Channel_SetVolume(int index, float volume);
 SOUNDAPI void Channel_SetPan(int index, float pan);
