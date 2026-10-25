@@ -407,15 +407,22 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
         {
             // Load uncompressed raw audio directly.
             // In this case, we must have all of the parameters supplied
+            ma_audio_buffer_config buffer_config;
             int bytes_per_frame = ma_get_bytes_per_frame(format, channels);
             int size_in_frames = buffer->size / bytes_per_frame;
+            buffer_config = ma_audio_buffer_config_init(format, channels, size_in_frames, buffer->data, 0);
+            buffer_config.sampleRate = sample_rate;
+
+            // CHECK(ma_audio_buffer_init(&buffer_config, &c->ref.ref));
+
             CHECK(ma_audio_buffer_ref_init(format, channels, buffer->data, size_in_frames, &c->ref.ref));
             c->ref.pUserData = c;
+            c->ref.ref.sampleRate = sample_rate;
+            // data_source = c->ref.ref.ref.ds.pCurrent;
             data_source = c->ref.ref.ds.pCurrent;
         }
         else
         {
-
             CHECK(ma_decoder_init_memory(buffer->data, buffer->size, &local_config, &c->decoder));
             c->decoder.pUserData = c;
             data_source = c->decoder.ds.pCurrent;
@@ -476,7 +483,7 @@ static void Channel_FreeInternal(Sound_Channel *c)
 {
     ma_decoder_uninit(&c->decoder);
     ma_sound_uninit(&c->sound_handle);
-    ma_audio_buffer_ref_uninit(&c->ref.ref);
+    // ma_audio_buffer_uninit(&c->ref.ref);
     c->ref.pUserData = 0;
 }
 
