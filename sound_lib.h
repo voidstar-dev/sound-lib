@@ -40,10 +40,24 @@ typedef struct
 
 typedef struct Sound Sound;
 
+// An extra wrapper to include a pointer to user data, which we need to implement looping
 typedef struct
 {
-    ma_decoder decoder;
+    ma_audio_buffer_ref ref; // Raw audio data
+    void *pUserData;
+} ma_audio_buffer_ref_wrapper;
+
+typedef struct
+{
     ma_sound sound_handle;
+
+
+    // We support either loading through a decoder, or streaming raw, uncompressed audio data.
+    // Note: These should really be in a union
+    // However, for easier uninitialization, we keep these separate so that a zeroed out struct is valid
+    ma_decoder decoder;
+    ma_audio_buffer_ref_wrapper ref;
+
 
     // The buffer that's currently playing on this channel
     Sound_Buffer *buffer;
@@ -68,6 +82,9 @@ typedef struct
 
     // Pitch ranges from 0 to 1 (affects speed as well)
     float pitch;
+
+    // Use ma_audio_buffer_ref as an audio source rather than the decoder.
+    bool use_raw_audio;
 
 } Sound_Channel;
 
@@ -111,7 +128,7 @@ SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 si
 SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
 
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
-SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels);
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio);
 SOUNDAPI int Channel_Stop(int channel_index);
 SOUNDAPI void Channel_SetVolume(int index, float volume);
 SOUNDAPI void Channel_SetPan(int index, float pan);

@@ -316,12 +316,11 @@ static void cb_channel_end(void *user_data, ma_sound *handle)
 // This function is in charge of looping
 // We _do not_!!! call ma_sound_set_looping() or use MA_SOUND_FLAG_LOOPING
 // Instead, we manually keep track of the loop count ourselves.
-static ma_data_source *cb_on_get_next(ma_data_source *data_source)
-{
-    ma_decoder *decoder = (ma_decoder *)data_source;
-    Sound_Channel *c = decoder->pUserData;
-    ma_data_source *next = 0;
 
+static ma_data_source *cb_on_get_next_wrapper(ma_data_source *data_source, Sound_Channel *c)
+{
+    ma_data_source *next = 0;
+    printf("On next...\n");
     if(c->loop_count > 0)
     {
         c->loop_count -= 1;
@@ -332,9 +331,25 @@ static ma_data_source *cb_on_get_next(ma_data_source *data_source)
     return next;
 }
 
+static ma_data_source *cb_on_get_next_decoder(ma_data_source *data_source)
+{
+    ma_decoder *decoder = (ma_decoder *)data_source;
+    Sound_Channel *c = decoder->pUserData;
+    return cb_on_get_next_wrapper(data_source, c);
+}
+
+static ma_data_source *cb_on_get_next_audio_ref(ma_data_source *data_source)
+{
+    ma_audio_buffer_ref_wrapper *ref = (ma_audio_buffer_ref_wrapper *)data_source;
+    Sound_Channel *c = ref->pUserData;
+    return cb_on_get_next_wrapper(data_source, c);
+}
+
+
 static void Channel_FreeInternal(Sound_Channel *c);
 
-static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound, int sample_rate, ma_format format, int channels)
+
+static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loop_count, Sound *sound, int sample_rate, ma_format format, int channels, bool raw_audio)
 {
     Sound_Channel *c = 0;
     int index_out = -1;
@@ -374,7 +389,7 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
         c->loop_count = loop_count;
 
 
-        // We can manually init the decoder here from a specified sampler rate, format, and channel count
+        // We can manually init the decoder here with a specified sample rate, format, and channel count
         if(sample_rate)
         {
             local_config.sampleRate = sample_rate;
@@ -388,18 +403,28 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
             local_config.channels = channels;
         }
 
+        if(raw_audio)
+        {
+            // Load uncompressed raw audio directly.
+            // In this case, we must have all of the parameters supplied
+            int bytes_per_frame = ma_get_bytes_per_frame(format, channels);
+            int size_in_frames = buffer->size / bytes_per_frame;
+            CHECK(ma_audio_buffer_ref_init(format, channels, buffer->data, size_in_frames, &c->ref.ref));
+            c->ref.pUserData = c;
+            data_source = c->ref.ref.ds.pCurrent;
+        }
+        else
+        {
 
-        CHECK(ma_decoder_init_memory(buffer->data, buffer->size, &local_config, &c->decoder));
+            CHECK(ma_decoder_init_memory(buffer->data, buffer->size, &local_config, &c->decoder));
+            c->decoder.pUserData = c;
+            data_source = c->decoder.ds.pCurrent;
+        }
 
-        // The decoder needs a reference back to the channel so that we can use it in cb_on_get_next()
-        // This controls the looping behaviour
-        c->decoder.pUserData = c;
         c->buffer = buffer;
         c->sound = sound;
-
         flags = MA_SOUND_FLAG_STREAM;
 
-        data_source = c->decoder.ds.pCurrent;
         config = ma_sound_config_init();
         config.pDataSource = data_source;
         config.endCallback = cb_channel_end;
@@ -410,12 +435,23 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
         ma_sound_set_pitch(&c->sound_handle, c->pitch);
         ma_sound_set_volume(&c->sound_handle, c->volume);
         ma_sound_set_pan(&c->sound_handle, c->pan);
-        ma_data_source_set_next_callback(data_source, cb_on_get_next);
+
+        // Now we need to check what callback type to set
+        if(raw_audio)
+        {
+            ma_data_source_set_next_callback(data_source, cb_on_get_next_audio_ref);
+        }
+        else
+        {
+            ma_data_source_set_next_callback(data_source, cb_on_get_next_decoder);
+        }
 
         if(c->sound)
         {
             c->sound->status = SOUND_STATUS_PLAYING;
         }
+
+        c->use_raw_audio = raw_audio;
 
         CHECK(ma_sound_start(&c->sound_handle));
     }
@@ -428,18 +464,20 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
 // Todo: What do we do on a null sound pointer?
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count)
 {
-    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, 0, 0, 0);
+    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, 0, 0, 0, 0);
 }
 
-SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels)
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio)
 {
-    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, sample_rate, format, channels);
+    return Channel_PlayInternal(channel_index, buffer, loop_count, 0, sample_rate, format, channels, raw_audio);
 }
 
 static void Channel_FreeInternal(Sound_Channel *c)
 {
     ma_decoder_uninit(&c->decoder);
     ma_sound_uninit(&c->sound_handle);
+    ma_audio_buffer_ref_uninit(&c->ref.ref);
+    c->ref.pUserData = 0;
 }
 
 SOUNDAPI int Channel_Stop(int channel_index)
@@ -522,7 +560,7 @@ SOUNDAPI void Sound_Play(Sound *sound)
         Channel_SetVolume(channel, sound->volume);
         Channel_SetPitch(channel, sound->pitch);
         Channel_SetPan(channel, sound->pan);
-        Channel_PlayInternal(channel, sound->buffer, loop_count, sound, 0, 0, 0);
+        Channel_PlayInternal(channel, sound->buffer, loop_count, sound, 0, 0, 0, 0);
     }
 }
 
