@@ -316,11 +316,9 @@ static void cb_channel_end(void *user_data, ma_sound *handle)
 // This function is in charge of looping
 // We _do not_!!! call ma_sound_set_looping() or use MA_SOUND_FLAG_LOOPING
 // Instead, we manually keep track of the loop count ourselves.
-
 static ma_data_source *cb_on_get_next_wrapper(ma_data_source *data_source, Sound_Channel *c)
 {
     ma_data_source *next = 0;
-    printf("On next...\n");
     if(c->loop_count > 0)
     {
         c->loop_count -= 1;
@@ -331,6 +329,7 @@ static ma_data_source *cb_on_get_next_wrapper(ma_data_source *data_source, Sound
     return next;
 }
 
+// We must obtain the data pointer in a slightly different way based on how we created this channel
 static ma_data_source *cb_on_get_next_decoder(ma_data_source *data_source)
 {
     ma_decoder *decoder = (ma_decoder *)data_source;
