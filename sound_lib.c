@@ -70,10 +70,11 @@ static void cb_device_read_frames(ma_device* pDevice, void* output, const void* 
 
 static void InitChannels();
 
-bool Audio_Init()
+
+bool Audio_InitEx(const Sound_Spec *spec)
 {
-    int rate = 44100;
-    int channels = 2;
+    int rate = spec->rate;
+    int channels = spec->channels;
     ma_format format = ma_format_f32;
     ma_device_config device_config;
     ma_engine_config engine_config;
@@ -94,16 +95,45 @@ bool Audio_Init()
 
     InitChannels();
 
-    ma_device_init(NULL, &device_config, &sound_config.device);
+    if(ma_device_init(NULL, &device_config, &sound_config.device) != MA_SUCCESS)
+    {
+        goto cleanup;
+    }
+
 
     engine_config = ma_engine_config_init();
     engine_config.pDevice = &sound_config.device;
     engine_config.noAutoStart = MA_TRUE;
 
-    CHECK(ma_engine_init(&engine_config, &sound_config.engine));
-    CHECK(ma_engine_start(&sound_config.engine));
+    if(ma_engine_init(&engine_config, &sound_config.engine) != MA_SUCCESS)
+    {
+        goto cleanup;
+    }
+    if(ma_engine_start(&sound_config.engine))
+    {
+        goto cleanup;
+    }
 
     return true;
+
+cleanup:
+    // Fixme!!! Make sure this works!
+    ma_mutex_uninit(&sound_config.mutex);
+    ma_engine_uninit(&sound_config.engine);
+    ma_device_uninit(&sound_config.device);
+    return false;
+}
+
+
+bool Audio_Init()
+{
+    Sound_Spec spec = {0};
+
+    spec.rate = 44100;
+    spec.channels = 2;
+    spec.format = ma_format_f32;
+
+    return Audio_InitEx(&spec);
 }
 
 // ==================================================================

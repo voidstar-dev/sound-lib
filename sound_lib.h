@@ -120,6 +120,18 @@ typedef struct
 
 } Sound_Config;
 
+typedef struct Sound_Spec
+{
+    int rate;
+    int channels;
+
+    // For now, format is always hardcoded to ma_format_f32, but it's here for potential future ABI compatability
+    ma_format format;
+
+} Sound_Spec;
+
+
+SOUNDAPI bool Audio_InitEx(const Sound_Spec *spec);
 SOUNDAPI bool Audio_Init();
 SOUNDAPI void Audio_DeviceLock();
 SOUNDAPI void Audio_DeviceUnlock();
