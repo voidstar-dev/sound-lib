@@ -24,6 +24,7 @@
 
 from pathlib import Path
 import time
+import re
 
 def sprintf(fmt, *args):
     s = fmt % args
@@ -94,7 +95,8 @@ def parse_header():
 
 
 class function_attributes():
-    def __init__(self, desc, return_desc):
+    def __init__(self, brief, desc, return_desc):
+        self.brief = brief
         self.desc = desc
         self.return_desc = return_desc
 
@@ -107,11 +109,14 @@ def parse_markdown_file():
     current_function = ""
     current_desc = ""
     current_return = ""
+    current_brief = ""
     in_desc = False
     in_return = False
+    parsed_lines = 0
 
     for l in lines:
         l = l.strip()
+        parsed_lines += 1
 
         if l.startswith("### Returns"):
             in_return = True
@@ -123,24 +128,30 @@ def parse_markdown_file():
             name = name.strip()
 
             if current_function:
-                function_list[current_function] = function_attributes(current_desc, current_return)
+                function_list[current_function] = function_attributes(current_brief, current_desc, current_return)
 
             current_function = name
 
             # Reset description
             current_desc = ""
             current_return = ""
+            current_brief = ""
             in_desc = True
             in_return = False
+            parsed_lines = 0
         else:
-            if in_desc: current_desc += l + "\n"
-            if in_return: current_return += l + "\n"
+            if in_desc:
+                if parsed_lines == 1:
+                    current_brief = l
+                else:
+                    current_desc += l + "\n"
 
+            if in_return: current_return += l + "\n"
 
 
     # Add the final function
     if current_function:
-        function_list[current_function] = function_attributes(current_desc, current_return)
+        function_list[current_function] = function_attributes(current_brief, current_desc, current_return)
 
     return function_list
 
@@ -173,6 +184,28 @@ def replace_function_links(desc, function_list):
 
     return new_desc.data().strip()
 
+def format_markdown(text):
+    # Match backticks
+    matches = re.findall(r"`[\w]+`?", text)
+    matches = set(matches)
+    for m in matches:
+        token = m.replace("`", "")
+        span = sprintf("<span class=\"inline-code\">%s</span>", token)
+        text = text.replace(m, span)
+
+    return text
+
+
+# Replace function names appearing in descriptions with links
+# We find the longest match for the given function
+def generate_remarks(sb, desc, function_list):
+    desc = replace_function_links(desc, function_list)
+    desc = format_markdown(desc)
+    sb.write("<h3>Remarks</h3>\n")
+    if not desc:
+        desc = "None."
+    sb.write("<p class=\"desc\">%s</p>\n", desc)
+
 def generate_html(output_name, function_list, header_functions):
     sb = string_builder()
 
@@ -182,7 +215,7 @@ def generate_html(output_name, function_list, header_functions):
     """
     <style>
     .desc {
-      margin: 0px;
+      #margin: 0px;
       #margin-left: 16px;
     }
 
@@ -193,7 +226,7 @@ def generate_html(output_name, function_list, header_functions):
 
     .codeblock {
         width: 80%;
-        background-color: #CCCCCC;
+        background-color: #DDDDDD;
         padding: 8px;
 
         /* Scrolling */
@@ -201,10 +234,17 @@ def generate_html(output_name, function_list, header_functions):
         #overflow-x: auto;
     }
 
+    /* Not sure if I should be using px, or em for the font-size */
+    .inline-code {
+        padding: 0px;
+        font-weight: bold;
+    }
+
     body {
         width: 80vw;
         margin: auto;
         overflow-wrap: break-word;
+        #font-family: sans;
     }
 
     hr {
@@ -266,7 +306,12 @@ def generate_html(output_name, function_list, header_functions):
         sb.write("<h2 id=%s>%s</h2>\n", func, func)
         desc = attributes.desc
         return_desc = attributes.return_desc
+        brief = attributes.brief
         desc_lines = desc.split("\n")
+
+        # Brief one-line summary
+        sb.write("<p>%s</p>\n", brief);
+
 
         if func in header_functions:
             signature = header_functions[func]
@@ -279,12 +324,7 @@ def generate_html(output_name, function_list, header_functions):
             warn("Function %s is missing from the header\n", func)
             continue
 
-
-        # Replace function names appearing in descriptions with links
-        # We find the longest match for the given function
-        new_desc = replace_function_links(desc, function_list)
-        sb.write("<p class=\"desc\">%s</p>\n", new_desc)
-
+        # Return type
         # Todo: Pre-parse the return type
         signature = header_functions[func]
         return_type = signature.split()[0].strip()
@@ -301,6 +341,12 @@ def generate_html(output_name, function_list, header_functions):
         else:
             if return_type != "void":
                 warn("Function %s is missing a 'return' section\n", func)
+
+        generate_remarks(sb, desc, function_list)
+
+
+        
+
 
         sb.write("<hr>\n")
 

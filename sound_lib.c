@@ -596,7 +596,7 @@ ma_data_source *GetChannelDataSource(Sound_Channel *c)
 
 SOUNDAPI float Channel_GetPlayCursorMS(int channel_index)
 {
-    float result = 0;
+    float result = -1;
     Sound_Channel *c;
 
     Audio_DeviceLock();
@@ -615,7 +615,7 @@ SOUNDAPI float Channel_GetPlayCursorMS(int channel_index)
 
 SOUNDAPI float Channel_GetPlayingTimeMS(int channel_index)
 {
-    float result = 0;
+    float result = -1;
     Sound_Channel *c;
 
     Audio_DeviceLock();
