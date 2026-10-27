@@ -8,16 +8,19 @@ Initialise the audio library with user-provided parameters.
 The format is currently hardcoded to be 32-bit floating point.
 
 ## Audio_DeviceLock
-Lock the audio device. Note that locking multiple times is currently not supported, and will result in a deadlock!
+Lock the audio device. Note that locking multiple times while the lock is already held is currently not supported, and will result in a deadlock!
+(Also known as a recursive mutex).
 
 ## Audio_DeviceUnlock
 Unlock the audio device.
 
 ## SoundBuffer_Load
 Load a sound into memory from a file.
+Free the buffer with SoundBuffer_Free.
 
 ## SoundBuffer_LoadFromMemory
 Load a sound into memory from other memory. Upon returning, the original data is no longer needed and can be freed if necessary.
+Free the buffer with SoundBuffer_Free.
 
 ## SoundBuffer_Free
 Free the sound buffer.
@@ -26,8 +29,8 @@ Free the sound buffer.
 Bind a buffer to the channel and play it, resampling to the default device format.
 This function expects that the buffer data is in some sort of decodable container (.WAV, .MP3)...
 If you want to play raw, uncompressed data, then call Channel_PlayEx().
-If loop_count is negative, then the buffer will play infinitely.
-Pass -1 to chanel_index to automatically find a free channel.
+If loop_count is negative, then the buffer will loop infinitely.
+Pass -1 as the chanel_index to automatically find a free channel.
 
 Returns: The channel index if successful, -1 on error.
 
@@ -36,13 +39,13 @@ Bind a buffer to the channel and play it. If sample_rate, format, or channels ar
 to that specification, and then again to the output device format.
 If raw_audio is true, then this indicates that the buffer is an uncompressed buffer of raw audio data.
 In this case, sample_rate, format, and channels _must_ be specified.
-If loop_count is negative, then the buffer will play infinitely.
-Pass -1 to chanel_index to automatically find a free channel.
+If loop_count is negative, then the buffer will loop infinitely.
+Pass -1 as the chanel_index to automatically find a free channel.
 
 Returns: The channel index if successful, -1 on error.
 
 ## Channel_Stop
-Stop the chanel.
+Stop the channel.
 
 ## Channel_SetVolume
 Set the channel volume. The range is typically 0 to 1 (a normalised floating point value).

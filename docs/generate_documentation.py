@@ -57,6 +57,11 @@ def parse_header():
     return header_functions
 
 
+class function_attributes():
+    def __init__(self, desc, return_desc):
+        self.desc = desc
+        self.return_desc = return_desc
+
 # Parse the md file for function names and documentation
 def parse_markdown_file():
     md_file = open("sound_lib.md").read()
@@ -73,7 +78,7 @@ def parse_markdown_file():
             name = name.strip()
 
             if current_function:
-                function_list[current_function] = current_desc
+                function_list[current_function] = function_list[current_function] = function_attributes(current_desc, None)
 
             current_function = name
 
@@ -85,15 +90,32 @@ def parse_markdown_file():
 
     # Add the final function
     if current_function:
-        function_list[current_function] = current_desc
+        function_list[current_function] = function_attributes(current_desc, None)
 
     return function_list
+
+
+# Given a word, and a list of keywords, find the best match
+# We don't do an equality comparison because a word may not be strictly equal to
+# that keyword (for example, there may be a function call as as func(), and
+# we're only matching 'func')
+def find_best_match(token, keywords):
+    best = ""
+    best_len = 0
+    for k in keywords:
+        if token.find(k) != -1:
+            size = len(k)
+            if size > best_len:
+                best_len = size
+                best = k
+    return best
 
 def generate_html(output_name, function_list, header_functions):
     sb = string_builder()
 
+    style = string_builder()
 
-    sb.write("%s",
+    style.write("%s",
     """
     <style>
     .desc {
@@ -126,25 +148,41 @@ def generate_html(output_name, function_list, header_functions):
         height: 1px;
         color: #333;
         background-color: #333;
-        
+    }
+
+    /* Enable word wrap */
+    p {
+        max-width: 85ch;
     }
 
     </style>
     """
     )
 
+    # Begin the html document
+    sb.write("<!DOCTYPE html>\n")
+    sb.write("<html>\n")
+
+    # Head section
+    sb.write("<head>\n")
+    sb.write("<meta charset=\"utf-8\"/>\n")
+    sb.write("%s\n", style.data())
+    sb.write("</head>\n")
+
+
+    # Body section
     sb.write("<body>\n")
 
     ignored_funcs = ("ma_sleep", "Sound_Load", "Sound_Play", "Sound_Stop")
 
     for func in header_functions:
         if func not in function_list and func not in ignored_funcs:
-            printf("Warning: Function '%s' is missing from the documentation!!!\n", func)
+            printf("WARNING: Function '%s' is missing from the documentation!!!\n", func)
 
     # Generate title
     title_heading = "Sound Lib Documentation"
     sb.write("<center>\n")
-    sb.write("<h1>%s</h1>", title_heading)
+    sb.write("<h1>%s</h1>\n", title_heading)
     sb.write("</center>\n")
 
 
@@ -156,15 +194,16 @@ def generate_html(output_name, function_list, header_functions):
         sb.write("</li>")
     sb.write("</ul>\n")
 
-    for func, desc in function_list.items():
+    for func, attributes in function_list.items():
         sb.write("\n")
         sb.write("<h2 id=%s>%s</h2>\n", func, func)
+        desc = attributes.desc
         desc_lines = desc.split("\n")
 
         if func in header_functions:
             signature = header_functions[func]
             sb.write("<h3>Syntax</h3>\n")
-            sb.write("<div class=\"codeblock\">")
+            sb.write("<div class=\"codeblock\">\n")
             sb.write("<code class=\"sourcecode\">%s</code>\n", signature)
             sb.write("</div>\n")
             sb.write("<br>\n")
@@ -172,8 +211,19 @@ def generate_html(output_name, function_list, header_functions):
             printf("WARNING: Function %s is missing from the header!!!\n", func)
 
 
-        for line in desc_lines:
-            sb.write("<p class=\"desc\">%s</p>\n", line)
+        # Replace function names appearing in descriptions with links
+        # We find the longest match for the given function
+        new_desc = string_builder()
+        words = desc.split()
+        for w in words:
+            match = find_best_match(w, function_list)
+            if match:
+                link = sprintf("<a href=#%s>%s</a>", match, match)
+                w = w.replace(match, link)
+
+            new_desc.write("%s ", w)
+
+        sb.write("<p class=\"desc\">%s</p>\n", new_desc.data().strip())
 
         sb.write("<hr>\n")
 
@@ -181,6 +231,7 @@ def generate_html(output_name, function_list, header_functions):
         # print(desc)
 
     sb.write("</body>\n")
+    sb.write("</html>\n")
 
     sb.save(output_name)
 
