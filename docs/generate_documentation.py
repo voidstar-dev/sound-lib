@@ -100,10 +100,11 @@ def parse_header():
 
 
 class function_attributes():
-    def __init__(self, brief, desc, return_desc):
+    def __init__(self, brief, remarks, return_desc, see_also):
         self.brief = brief
-        self.desc = desc
+        self.remarks = remarks
         self.return_desc = return_desc
+        self.see_also = see_also
 
 # Parse the md file for function names and documentation
 def parse_markdown_file():
@@ -115,8 +116,10 @@ def parse_markdown_file():
     current_desc = ""
     current_return = ""
     current_brief = ""
+    current_see_also = ""
     in_desc = False
     in_return = False
+    in_see_also = False
     parsed_lines = 0
 
     for l in lines:
@@ -126,6 +129,13 @@ def parse_markdown_file():
         if l.startswith("### Returns"):
             in_return = True
             in_desc = False
+            in_see_also = False
+            continue
+
+        if l.startswith("### See Also"):
+            in_see_also = True
+            in_return = False
+            in_desc = False
             continue
 
         if l.startswith("## "):
@@ -133,7 +143,7 @@ def parse_markdown_file():
             name = name.strip()
 
             if current_function:
-                function_list[current_function] = function_attributes(current_brief, current_desc, current_return)
+                function_list[current_function] = function_attributes(current_brief, current_desc, current_return, current_see_also)
 
             current_function = name
 
@@ -141,8 +151,10 @@ def parse_markdown_file():
             current_desc = ""
             current_return = ""
             current_brief = ""
+            current_see_also = ""
             in_desc = True
             in_return = False
+            in_see_also = False
             parsed_lines = 0
         else:
             if in_desc:
@@ -152,11 +164,12 @@ def parse_markdown_file():
                     current_desc += l + "\n"
 
             if in_return: current_return += l + "\n"
+            if in_see_also: current_see_also += l
 
 
     # Add the final function
     if current_function:
-        function_list[current_function] = function_attributes(current_brief, current_desc, current_return)
+        function_list[current_function] = function_attributes(current_brief, current_desc, current_return, current_see_also)
 
     return function_list
 
@@ -210,6 +223,41 @@ def generate_remarks(sb, desc, function_list):
     if not desc:
         desc = "None."
     sb.write("<p class=\"desc\">%s</p>\n", desc)
+
+def generate_see_also(sb, see_also, function_list):
+    lines = see_also.split("\n")
+    tmp = string_builder()
+    for l in lines:
+        if not l: continue
+
+        if l in function_list:
+            l = replace_function_links(l, function_list)
+            tmp.write("%s\n", l)
+        else:
+            warn("'See Also' line '%s' is not a function!\n", l)
+
+    data = tmp.data()
+
+    # Only generate if we have something
+    if data:
+        sb.write("<h3>See Also</h3>\n")
+        sb.write("<ul>\n")
+        lines = data.split("\n")
+        lines.pop()
+        for line in lines:
+            sb.write("<li>%s</li>\n", line)
+
+        sb.write("</ul>\n")
+
+
+def generate_links(sb, function_list):
+    sb.write("<ul>\n")
+    for func, _ in function_list.items():
+        sb.write("<li>")
+        sb.write("<a href=#%s>%s</a>\n", func, func)
+        sb.write("</li>")
+    sb.write("</ul>\n")
+
 
 def generate_html(output_name, function_list, header_functions):
     sb = string_builder()
@@ -297,24 +345,20 @@ def generate_html(output_name, function_list, header_functions):
     sb.write("</center>\n")
 
 
-    # Generate links
-    sb.write("<ul>\n")
-    for func, _ in function_list.items():
-        sb.write("<li>")
-        sb.write("<a href=#%s>%s</a>\n", func, func)
-        sb.write("</li>")
-    sb.write("</ul>\n")
+    generate_links(sb, function_list)
+    sb.write("<hr>\n")
 
     # Generate name, syntax, and description
     for func, attributes in function_list.items():
         sb.write("\n")
         sb.write("<h2 id=%s>%s</h2>\n", func, func)
-        desc = attributes.desc
         return_desc = attributes.return_desc
         brief = attributes.brief
-        desc_lines = desc.split("\n")
+        remarks = attributes.remarks
+        see_also = attributes.see_also
 
         # Brief one-line summary
+        brief = replace_function_links(brief, function_list)
         sb.write("<p>%s</p>\n", brief);
 
 
@@ -332,7 +376,7 @@ def generate_html(output_name, function_list, header_functions):
         # Return type
         # Todo: Pre-parse the return type
         signature = header_functions[func]
-        return_type = signature.split()[0].strip()
+        return_type = signature.split()[0].strip().lower()
         # Return statement
         if return_desc:
             if return_type != "void":
@@ -347,7 +391,9 @@ def generate_html(output_name, function_list, header_functions):
             if return_type != "void":
                 warn("Function %s is missing a 'return' section\n", func)
 
-        generate_remarks(sb, desc, function_list)
+        generate_remarks(sb, remarks, function_list)
+
+        generate_see_also(sb, see_also, function_list)
 
 
         
@@ -362,7 +408,8 @@ def generate_html(output_name, function_list, header_functions):
     sb.write("<p>\n")
     current_file_name = Path(__file__).name
     # time.strftime automatically uses the local time if we don't pass anything in
-    date_string = time.strftime("%Y-%m-%d - %H:%M:%S")
+    # date_string = time.strftime("%Y-%m-%d - %H:%M:%S")
+    date_string = time.strftime("%Y-%m-%d")
     sb.write("<center>\n")
     sb.write("Generated by <i>%s</i> on <i>%s</i>\n", current_file_name, date_string)
     sb.write("</center>\n")

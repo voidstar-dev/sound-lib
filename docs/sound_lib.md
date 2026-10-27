@@ -3,6 +3,9 @@ Initialise the audio library with sensible defaults.
 The current defaults are:
 44100 hz, 2 channel, 32-bit floating point audio.
 
+### See Also
+Audio_InitEx
+
 ### Returns
 true on success, or false on failure.
 
@@ -13,10 +16,15 @@ The format is currently hardcoded to be 32-bit floating point.
 ### Returns
 true on success, or false on failure.
 
+### See Also
+Audio_Init
+
+
+
 ## Audio_DeviceLock
 Lock the audio device mutex. 
 Note that locking on the same thread multiple times while the lock is already held is currently not supported, and will result in a deadlock!
-(Also known as a recursive mutex).
+The re-entrant behaviour of a lock is called a recursive mutex.
 
 ## Audio_DeviceUnlock
 Unlock the audio device mutex.
@@ -103,11 +111,22 @@ The total amount of milliseconds since Channel_Play() / Channel_PlayEx() was cal
 
 
 ## Channel_GetPlayCursor
-More user-friendly name of Channel_GetPlayCursorMS. Uses the same units
+Get the current timestamp of the playing sound in milliseconds.
+More user-friendly name for Channel_GetPlayCursorMS.
+
+### Returns
+The current play cursor of the channel's buffer in milliseconds, or -1 on failure.
 
 ## Channel_SetPlayCursor
-More user-friendly name of Channel_SetPlayCursorMS. Uses the same units.
+Seek to the specified time (milliseconds) in the buffer being played by the channel.
+More user-friendly name for Channel_SetPlayCursorMS.
+
+### Returns
+True on success, or false on failure.
 
 ## Channel_GetPlayingTime
-More user-friendly name of Channel_GetPlayingTimeMS. Uses the same units.
+Get the total amount of time (milliseconds) since Channel_Play() / Channel_PlayEx() was called.
+More user-friendly name for Channel_GetPlayingTimeMS.
 
+### Returns
+The total amount of milliseconds since Channel_Play() / Channel_PlayEx() was called, or -1 on failure.
