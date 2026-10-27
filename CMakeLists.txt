@@ -56,8 +56,10 @@ target_link_options(sound_lib PRIVATE ${WIN32_LINKER_FLAGS})
 
 # If we're using mingw, keep to the Windows library conventions
 # https://stackoverflow.com/questions/31038963/how-do-you-rename-a-library-filename-in-cmake
+# https://cmake.org/cmake/help/latest/prop_tgt/IMPORT_PREFIX.html
 if(MINGW)
     set_target_properties(sound_lib PROPERTIES PREFIX "")
+    set_target_properties(sound_lib PROPERTIES IMPORT_PREFIX "")
 endif()
 
 
@@ -92,6 +94,10 @@ endif()
 
 # How to install
 if(SOUND_ROOT_PROJECT)
+    # Install targets in their respective bin directories
     install(TARGETS sound_lib ${TEST_TARGETS} DESTINATION ${BIN_DIR})
     install(DIRECTORY test DESTINATION ${BIN_DIR})
+
+    # Install targets in a shared bin directory for distribution
+    install(TARGETS sound_lib DESTINATION bin_x64)
 endif()
