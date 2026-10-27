@@ -1,4 +1,13 @@
 cmake_minimum_required(VERSION 3.1)
+
+# Detect whether we are the root project, or a subproject.
+# If we're a subproject, we want to disable several things
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(SOUND_ROOT_PROJECT TRUE)
+else()
+    set(SOUND_ROOT_PROJECT FALSE)
+endif()
+
 project(sound_lib)
 
 
@@ -32,8 +41,10 @@ if(MSVC)
     set(BIN_DIR bin_msvc_x64)
 endif()
 
-# We only need this to compile the visual test programs
-find_package(SDL2 QUIET)
+if(SOUND_ROOT_PROJECT)
+    # We only need this to compile the visual test programs
+    find_package(SDL2 QUIET)
+endif()
 
 # The library itself
 set(SOUND_SOURCES sound_lib.c miniaudio.c extras/stb_vorbis.c)
@@ -63,11 +74,12 @@ macro(build_test name)
 endmacro()
 
 
-build_test(test_wav)
-build_test(test_mp3)
-build_test(test_ogg)
-build_test(test_flac)
-
+if(SOUND_ROOT_PROJECT)
+    build_test(test_wav)
+    build_test(test_mp3)
+    build_test(test_ogg)
+    build_test(test_flac)
+endif()
 
 # Some more test utilities
 if(SDL2_FOUND)
@@ -79,5 +91,7 @@ if(SDL2_FOUND)
 endif()
 
 # How to install
-install(TARGETS sound_lib ${TEST_TARGETS} DESTINATION ${BIN_DIR})
-install(DIRECTORY test DESTINATION ${BIN_DIR})
+if(SOUND_ROOT_PROJECT)
+    install(TARGETS sound_lib ${TEST_TARGETS} DESTINATION ${BIN_DIR})
+    install(DIRECTORY test DESTINATION ${BIN_DIR})
+endif()

@@ -28,6 +28,8 @@
 #include "sound_lib.h"
 
 
+#define MA_SUCCEEDED(expr) ((expr) == MA_SUCCESS)
+
 Sound_Config sound_config;
 Sound_Channel channels[SOUND_CHANNEL_COUNT] = {0};
 
@@ -46,12 +48,12 @@ static void *xalloc(size_t size)
 // ==================================================================
 // Section: [Audio Device]
 // ==================================================================
-void Audio_DeviceLock()
+void Audio_DeviceLock(void)
 {
     ma_mutex_lock(&sound_config.mutex);
 }
 
-void Audio_DeviceUnlock()
+void Audio_DeviceUnlock(void)
 {
     ma_mutex_unlock(&sound_config.mutex);
 }
@@ -125,7 +127,7 @@ cleanup:
 }
 
 
-bool Audio_Init()
+bool Audio_Init(void)
 {
     Sound_Spec spec = {0};
 
@@ -579,6 +581,91 @@ SOUNDAPI bool Channel_IsPlaying(int index)
 
     return result;
 
+}
+
+#if 0
+ma_data_source *GetChannelDataSource(Sound_Channel *c)
+{
+    if(c->use_raw_audio)
+    {
+        return c->ref.ref.ds.pCurrent;
+    }
+    else
+    {
+        return c->decoder.ds.pCurrent;
+    }
+}
+#endif
+
+SOUNDAPI float Channel_GetPlayCursorMS(int channel_index)
+{
+    float result = 0;
+    Sound_Channel *c;
+
+    Audio_DeviceLock();
+
+    c = GetChannel(channel_index);
+    if(c)
+    {
+        ma_sound_get_cursor_in_seconds(&c->sound_handle, &result);
+        result *= 1000;
+    }
+
+    Audio_DeviceUnlock();
+
+    return result;
+}
+
+SOUNDAPI float Channel_GetPlayingTimeMS(int channel_index)
+{
+    float result = 0;
+    Sound_Channel *c;
+
+    Audio_DeviceLock();
+
+    c = GetChannel(channel_index);
+    if(c)
+    {
+        result = ma_sound_get_time_in_milliseconds(&c->sound_handle);
+    }
+
+    Audio_DeviceUnlock();
+
+    return result;
+}
+
+SOUNDAPI bool Channel_SetPlayCursorMS(int channel_index, float milliseconds)
+{
+    Sound_Channel *c;
+    bool result = false;
+
+    Audio_DeviceLock();
+
+    c = GetChannel(channel_index);
+    if(c)
+    {
+        float seconds = milliseconds / 1000;
+        result = MA_SUCCEEDED(ma_sound_seek_to_second(&c->sound_handle, seconds));
+    }
+
+    Audio_DeviceUnlock();
+
+    return result;
+}
+
+SOUNDAPI float Channel_GetPlayCursor(int channel_index)
+{
+    return Channel_GetPlayCursorMS(channel_index);
+}
+
+SOUNDAPI bool Channel_SetPlayCursor(int channel_index, float milliseconds)
+{
+    return Channel_SetPlayCursorMS(channel_index, milliseconds);
+}
+
+SOUNDAPI float Channel_GetPlayingTime(int channel_index)
+{
+    return Channel_GetPlayingTimeMS(channel_index);
 }
 
 // ==================================================================

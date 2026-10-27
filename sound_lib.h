@@ -131,10 +131,10 @@ typedef struct Sound_Spec
 } Sound_Spec;
 
 
+SOUNDAPI bool Audio_Init(void);
 SOUNDAPI bool Audio_InitEx(const Sound_Spec *spec);
-SOUNDAPI bool Audio_Init();
-SOUNDAPI void Audio_DeviceLock();
-SOUNDAPI void Audio_DeviceUnlock();
+SOUNDAPI void Audio_DeviceLock(void);
+SOUNDAPI void Audio_DeviceUnlock(void);
 SOUNDAPI Sound_Buffer *SoundBuffer_Load(const char *filepath);
 SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
 SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
@@ -142,10 +142,19 @@ SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
 SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio);
 SOUNDAPI int Channel_Stop(int channel_index);
-SOUNDAPI void Channel_SetVolume(int index, float volume);
-SOUNDAPI void Channel_SetPan(int index, float pan);
-SOUNDAPI void Channel_SetPitch(int index, float pitch);
-SOUNDAPI bool Channel_IsPlaying(int index);
+SOUNDAPI void Channel_SetVolume(int channel_index, float volume);
+SOUNDAPI void Channel_SetPan(int channel_index, float pan);
+SOUNDAPI void Channel_SetPitch(int channel_index, float pitch);
+SOUNDAPI bool Channel_IsPlaying(int channel_index);
+SOUNDAPI float Channel_GetPlayCursorMS(int channel_index);
+SOUNDAPI bool Channel_SetPlayCursorMS(int channel_index, float milliseconds);
+SOUNDAPI float Channel_GetPlayingTimeMS(int channel_index);
+
+// Simple names for the above functions
+// These use the same units
+SOUNDAPI float Channel_GetPlayCursor(int channel_index);
+SOUNDAPI bool Channel_SetPlayCursor(int channel_index, float milliseconds);
+SOUNDAPI float Channel_GetPlayingTime(int channel_index);
 
 
 // Incomplete for now, do not use!
