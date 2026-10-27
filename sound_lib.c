@@ -514,11 +514,11 @@ static void Channel_FreeInternal(Sound_Channel *c)
 {
     ma_decoder_uninit(&c->decoder);
     ma_sound_uninit(&c->sound_handle);
-    // ma_audio_buffer_uninit(&c->ref.ref);
+    ma_audio_buffer_ref_uninit(&c->ref.ref);
     c->ref.pUserData = 0;
 }
 
-SOUNDAPI int Channel_Stop(int channel_index)
+SOUNDAPI void Channel_Stop(int channel_index)
 {
     Sound_Channel *c = GetChannel(channel_index);
     if(c)
@@ -526,9 +526,6 @@ SOUNDAPI int Channel_Stop(int channel_index)
         ma_sound_stop(&c->sound_handle);
         c->status = SOUND_STATUS_STOPPED;
     }
-
-    // Fixme!!! Correct return value.
-    return 0;
 }
 
 

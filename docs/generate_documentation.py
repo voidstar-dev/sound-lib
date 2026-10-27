@@ -38,6 +38,15 @@ def write_entire_file(name, data):
     f.write(data)
     f.close()
 
+def warn(fmt, *args):
+    ansi_codes = True
+    heading = "WARNING: "
+    s = sprintf(fmt, *args)
+    if(ansi_codes): printf("\033[1;35m%s\033[0m", heading)
+    else:           printf("%s", heading)
+
+    printf("%s", s)
+
 class string_builder:
     def __init__(self):
         self.buf = ""
@@ -232,7 +241,7 @@ def generate_html(output_name, function_list, header_functions):
 
     for func in header_functions:
         if func not in function_list and func not in ignored_funcs:
-            printf("WARNING: Function '%s' is missing from the documentation!!!\n", func)
+            warn("Function '%s' is missing from the documentation\n", func)
 
     # Generate title
     title_heading = "Sound Lib Documentation"
@@ -265,7 +274,7 @@ def generate_html(output_name, function_list, header_functions):
             sb.write("</div>\n")
             sb.write("<br>\n")
         else:
-            printf("WARNING: Function %s is missing from the header!!!\n", func)
+            warn("Function %s is missing from the header\n", func)
             continue
 
 
@@ -274,20 +283,20 @@ def generate_html(output_name, function_list, header_functions):
         new_desc = replace_function_links(desc, function_list)
         sb.write("<p class=\"desc\">%s</p>\n", new_desc)
 
-        if not return_desc:
-            # Check return type of the function
-            signature = header_functions[func]
-            return_type = signature.split()[0].strip()
-            if return_type != "void":
-                printf("WARNING: Function %s is missing 'return' documentation!!!\n", func)
-
-
+        signature = header_functions[func]
+        return_type = signature.split()[0].strip()
         # Return statement
-        if return_desc:
-            sb.write("<h3>Return Value</h3>\n")
-            # Lowercase the first word since we always prefix the sentence with "Returns"
-            letter = return_desc[0].lower()
-            sb.write("<p>Returns %c%s</p>\n", letter, return_desc[1:])
+        if not return_desc:
+            if return_type != "void":
+                warn("Function %s is missing a 'return' section\n", func)
+        else:
+            if return_type != "void":
+                sb.write("<h3>Return Value</h3>\n")
+                # Lowercase the first word since we always prefix the sentence with "Returns"
+                letter = return_desc[0].lower()
+                sb.write("<p>Returns %c%s</p>\n", letter, return_desc[1:])
+            else:
+                warn("Function %s returns void, but has a 'return' section\n", func)
 
         sb.write("<hr>\n")
 

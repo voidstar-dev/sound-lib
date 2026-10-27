@@ -20,6 +20,7 @@ Lock the audio device mutex. Note that locking on the same thread multiple times
 ## Audio_DeviceUnlock
 Unlock the audio device mutex.
 
+
 ## SoundBuffer_Load
 Load a sound into memory from a file.
 Free the buffer with SoundBuffer_Free.
