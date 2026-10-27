@@ -123,7 +123,7 @@ def parse_markdown_file():
             name = name.strip()
 
             if current_function:
-                function_list[current_function] = function_list[current_function] = function_attributes(current_desc, current_return)
+                function_list[current_function] = function_attributes(current_desc, current_return)
 
             current_function = name
 
@@ -223,6 +223,8 @@ def generate_html(output_name, function_list, header_functions):
     """
     )
 
+    title_heading = "Sound Lib Documentation"
+
     # Begin the html document
     sb.write("<!DOCTYPE html>\n")
     sb.write("<html>\n")
@@ -231,6 +233,7 @@ def generate_html(output_name, function_list, header_functions):
     sb.write("<head>\n")
     sb.write("<meta charset=\"utf-8\"/>\n")
     sb.write("%s\n", style.data())
+    sb.write("<title>%s</title>\n", title_heading)
     sb.write("</head>\n")
 
 
@@ -244,7 +247,6 @@ def generate_html(output_name, function_list, header_functions):
             warn("Function '%s' is missing from the documentation\n", func)
 
     # Generate title
-    title_heading = "Sound Lib Documentation"
     sb.write("<center>\n")
     sb.write("<h1>%s</h1>\n", title_heading)
     sb.write("</center>\n")
@@ -283,25 +285,24 @@ def generate_html(output_name, function_list, header_functions):
         new_desc = replace_function_links(desc, function_list)
         sb.write("<p class=\"desc\">%s</p>\n", new_desc)
 
+        # Todo: Pre-parse the return type
         signature = header_functions[func]
         return_type = signature.split()[0].strip()
         # Return statement
-        if not return_desc:
-            if return_type != "void":
-                warn("Function %s is missing a 'return' section\n", func)
-        else:
+        if return_desc:
             if return_type != "void":
                 sb.write("<h3>Return Value</h3>\n")
                 # Lowercase the first word since we always prefix the sentence with "Returns"
+                return_desc = replace_function_links(return_desc, function_list)
                 letter = return_desc[0].lower()
                 sb.write("<p>Returns %c%s</p>\n", letter, return_desc[1:])
             else:
                 warn("Function %s returns void, but has a 'return' section\n", func)
+        else:
+            if return_type != "void":
+                warn("Function %s is missing a 'return' section\n", func)
 
         sb.write("<hr>\n")
-
-        # print(f)
-        # print(desc)
 
     sb.write("</body>\n")
 
