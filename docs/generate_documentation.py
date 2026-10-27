@@ -5,9 +5,14 @@
 # Function name matching is performed during document compilation, to ensure that function names match between
 # the .md file and the .h file.
 
+# The first line (not sentence!) of each function section serves as a brief
+# summary. The subsequent lines go into the "Remarks" section, which should
+# contain more detailed information about the function.
+
 
 # .md syntax
 # ## <Function Name>
+# <Brief>
 # <Desc>
 
 # ### Returns
