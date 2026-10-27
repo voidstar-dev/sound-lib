@@ -23,7 +23,7 @@
 #define SOUNDAPI
 #endif
 
-typedef struct
+typedef struct Sound_Buffer
 {
     // Private data, do not touch!
 
@@ -47,7 +47,7 @@ typedef struct
     void *pUserData;
 } ma_audio_buffer_ref_wrapper;
 
-typedef struct
+typedef struct Sound_Channel
 {
     ma_sound sound_handle;
 
@@ -105,7 +105,7 @@ typedef struct Sound
 
 
 
-typedef struct
+typedef struct Sound_Config
 {
     int rate;
     int channels;
@@ -137,8 +137,7 @@ SOUNDAPI void Audio_DeviceLock(void);
 SOUNDAPI void Audio_DeviceUnlock(void);
 SOUNDAPI Sound_Buffer *SoundBuffer_Load(const char *filepath);
 SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
-SOUNDAPI void SoundBuffer_Free(Sound_Buffer *sound);
-
+SOUNDAPI void SoundBuffer_Free(Sound_Buffer *buffer);
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
 SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio);
 SOUNDAPI int Channel_Stop(int channel_index);
@@ -150,8 +149,6 @@ SOUNDAPI float Channel_GetPlayCursorMS(int channel_index);
 SOUNDAPI bool Channel_SetPlayCursorMS(int channel_index, float milliseconds);
 SOUNDAPI float Channel_GetPlayingTimeMS(int channel_index);
 
-// Simple names for the above functions
-// These use the same units
 SOUNDAPI float Channel_GetPlayCursor(int channel_index);
 SOUNDAPI bool Channel_SetPlayCursor(int channel_index, float milliseconds);
 SOUNDAPI float Channel_GetPlayingTime(int channel_index);
