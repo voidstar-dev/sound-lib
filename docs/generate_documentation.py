@@ -1,3 +1,30 @@
+# Documentation generator for sound_lib.h
+# Note that this is not a real C parser.
+# It exploits some common patterns found in the header file for easier parsing.
+# This file uses sound_lib.md as an auxillary file for the actual documentation
+# Function name matching is performed during document compilation, to ensure that function names match between
+# the .md file and the .h file.
+
+
+# .md syntax
+# ## <Function Name>
+# <Desc>
+
+# ### Returns
+# <Optional return desc>
+
+# See sound_lib.md for examples.
+
+
+# The return heading is optional.
+# Currently, we do a simple check on the function signature. If the return type is not void,
+# we warn if the return heading is missing.
+
+
+
+from pathlib import Path
+import time
+
 def sprintf(fmt, *args):
     s = fmt % args
     return s
@@ -70,27 +97,41 @@ def parse_markdown_file():
 
     current_function = ""
     current_desc = ""
+    current_return = ""
+    in_desc = False
+    in_return = False
 
     for l in lines:
         l = l.strip()
-        if l.startswith("##"):
+
+        if l.startswith("### Returns"):
+            in_return = True
+            in_desc = False
+            continue
+
+        if l.startswith("## "):
             name = l.removeprefix("##")
             name = name.strip()
 
             if current_function:
-                function_list[current_function] = function_list[current_function] = function_attributes(current_desc, None)
+                function_list[current_function] = function_list[current_function] = function_attributes(current_desc, current_return)
 
             current_function = name
 
             # Reset description
             current_desc = ""
+            current_return = ""
+            in_desc = True
+            in_return = False
         else:
-            current_desc += l + "\n"
+            if in_desc: current_desc += l + "\n"
+            if in_return: current_return += l + "\n"
+
 
 
     # Add the final function
     if current_function:
-        function_list[current_function] = function_attributes(current_desc, None)
+        function_list[current_function] = function_attributes(current_desc, current_return)
 
     return function_list
 
@@ -109,6 +150,19 @@ def find_best_match(token, keywords):
                 best_len = size
                 best = k
     return best
+
+def replace_function_links(desc, function_list):
+    new_desc = string_builder()
+    words = desc.split()
+    for w in words:
+        match = find_best_match(w, function_list)
+        if match:
+            link = sprintf("<a href=#%s>%s</a>", match, match)
+            w = w.replace(match, link)
+
+        new_desc.write("%s ", w)
+
+    return new_desc.data().strip()
 
 def generate_html(output_name, function_list, header_functions):
     sb = string_builder()
@@ -141,6 +195,7 @@ def generate_html(output_name, function_list, header_functions):
     body {
         width: 80vw;
         margin: auto;
+        overflow-wrap: break-word;
     }
 
     hr {
@@ -194,10 +249,12 @@ def generate_html(output_name, function_list, header_functions):
         sb.write("</li>")
     sb.write("</ul>\n")
 
+    # Generate name, syntax, and description
     for func, attributes in function_list.items():
         sb.write("\n")
         sb.write("<h2 id=%s>%s</h2>\n", func, func)
         desc = attributes.desc
+        return_desc = attributes.return_desc
         desc_lines = desc.split("\n")
 
         if func in header_functions:
@@ -209,21 +266,28 @@ def generate_html(output_name, function_list, header_functions):
             sb.write("<br>\n")
         else:
             printf("WARNING: Function %s is missing from the header!!!\n", func)
+            continue
 
 
         # Replace function names appearing in descriptions with links
         # We find the longest match for the given function
-        new_desc = string_builder()
-        words = desc.split()
-        for w in words:
-            match = find_best_match(w, function_list)
-            if match:
-                link = sprintf("<a href=#%s>%s</a>", match, match)
-                w = w.replace(match, link)
+        new_desc = replace_function_links(desc, function_list)
+        sb.write("<p class=\"desc\">%s</p>\n", new_desc)
 
-            new_desc.write("%s ", w)
+        if not return_desc:
+            # Check return type of the function
+            signature = header_functions[func]
+            return_type = signature.split()[0].strip()
+            if return_type != "void":
+                printf("WARNING: Function %s is missing 'return' documentation!!!\n", func)
 
-        sb.write("<p class=\"desc\">%s</p>\n", new_desc.data().strip())
+
+        # Return statement
+        if return_desc:
+            sb.write("<h3>Return Value</h3>\n")
+            # Lowercase the first word since we always prefix the sentence with "Returns"
+            letter = return_desc[0].lower()
+            sb.write("<p>Returns %c%s</p>\n", letter, return_desc[1:])
 
         sb.write("<hr>\n")
 
@@ -231,6 +295,19 @@ def generate_html(output_name, function_list, header_functions):
         # print(desc)
 
     sb.write("</body>\n")
+
+    # Footer
+    sb.write("<footer>\n")
+    sb.write("<p>\n")
+    current_file_name = Path(__file__).name
+    # time.strftime automatically uses the local time if we don't pass anything in
+    date_string = time.strftime("%Y-%m-%d - %H:%M:%S")
+    sb.write("<center>\n")
+    sb.write("Generated by <i>%s</i> on <i>%s</i>\n", current_file_name, date_string)
+    sb.write("</center>\n")
+    sb.write("</p>\n")
+    sb.write("</footer>\n")
+
     sb.write("</html>\n")
 
     sb.save(output_name)
