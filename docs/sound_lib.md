@@ -47,12 +47,13 @@ A valid pointer to a Sound_Buffer, or NULL on failure.
 
 ## SoundBuffer_Free
 Free the sound buffer.
+This function will also stop any channels that were using this buffer.
 
 ## Channel_Play
 Bind a buffer to the channel and play it, resampling to the default device format.
 This function expects that the buffer data is in some sort of decodable container (.WAV, .MP3)...
 If you want to play raw, uncompressed data, then call Channel_PlayEx() with `raw_audio` set to `true`.
-If loop_count is negative, then the buffer will loop infinitely.
+If `loop_count` is negative, then the buffer will loop infinitely.
 Pass -1 as the `channel_index` to automatically find a free channel.
 
 ### Returns
@@ -62,7 +63,7 @@ The channel index on success, or -1 on failure.
 Bind a buffer to the channel and play it, resampling to the default device format.
 If any combination of sample_rate, format, or channels are non-zero, then the library will resample the buffer
 to that specification, and then again to the output device format.
-If `raw_audio` is true, then this indicates that the buffer is an uncompressed buffer of raw audio data.
+If `raw_audio` is true, then this indicates that the buffer contains uncompressed raw audio data.
 In this case, `sample_rate`, `format`, and `channels` _must_ be specified.
 If `loop_count` is negative, then the buffer will loop infinitely.
 Pass -1 as the `channel_index` to automatically find a free channel.
