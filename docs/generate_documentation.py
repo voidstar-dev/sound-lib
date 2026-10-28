@@ -17,6 +17,7 @@
 # <Brief>
 # <Desc>
 
+
 # ### Returns
 # <Optional return desc>
 
@@ -26,9 +27,9 @@
 # See sound_lib.md for examples.
 
 
-# The return heading is optional.
+# The 'Returns' and 'See Also' headings are optional.
 # Currently, we do a simple check on the function signature. If the return type is not void,
-# we warn if the return heading is missing.
+# we warn if the 'Returns' heading is missing.
 
 
 

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Developer use only
+# Either run build_linux_x64.sh, or use CMake
+
 # Silence output of a succesful build
 # Only display it in case we fail
 ninja -C build_linux_x64 install > log.txt

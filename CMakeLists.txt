@@ -60,6 +60,7 @@ target_link_options(sound_lib PRIVATE ${WIN32_LINKER_FLAGS})
 if(MINGW)
     set_target_properties(sound_lib PROPERTIES PREFIX "")
     set_target_properties(sound_lib PROPERTIES IMPORT_PREFIX "")
+    set_target_properties(sound_lib PROPERTIES IMPORT_SUFFIX ".lib")
 endif()
 
 
@@ -99,5 +100,5 @@ if(SOUND_ROOT_PROJECT)
     install(DIRECTORY test DESTINATION ${BIN_DIR})
 
     # Install targets in a shared bin directory for distribution
-    install(TARGETS sound_lib DESTINATION bin_x64)
+    install(TARGETS sound_lib DESTINATION sound_lib/bin_x64)
 endif()
