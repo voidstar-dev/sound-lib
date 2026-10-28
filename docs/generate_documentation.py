@@ -97,19 +97,58 @@ def parse_function_signature(line: str):
 
     return name, signature, found
 
+class Header():
+    def __init__(self, functions, structs):
+        self.functions = functions
+        self.structs = structs
+
 def parse_header():
     # Parse the header for function names and the signature
     header = open("../src/sound_lib.h").read()
     header_lines = header.split("\n")
     header_functions = {}
+    structs = {}
+
+    in_struct = False
+    struct_name = ""
+    struct_text = ""
+    regex = None
 
     for line in header_lines:
         if len(line) == 0: continue
-        func_name, func_signature, found = parse_function_signature(line)
-        if found:
-            header_functions[func_name] = func_signature
 
-    return header_functions
+        # Try to parse struct
+        if line.startswith("typedef struct"):
+            assert(not in_struct)
+            tokens = line.split()
+            if len(tokens) == 3:
+                if not line.endswith(";"):
+                    in_struct = True
+                    struct_name = line.replace("typedef struct", "").strip()
+                    struct_text = line + "\n"
+                    expr = sprintf("} %s;", struct_name)
+                    regex = re.compile(expr)
+                    continue
+
+
+
+        if in_struct:
+            struct_text += line + "\n"
+            matches = re.match(regex, line)
+            if matches:
+                in_struct = False
+                assert(struct_name not in structs)
+                structs[struct_name] = struct_text
+        else:
+            func_name, func_signature, found = parse_function_signature(line)
+            if found:
+                header_functions[func_name] = func_signature
+
+
+
+    header = Header(header_functions, structs)
+
+    return header
 
 
 class function_attributes():
@@ -124,6 +163,12 @@ def parse_markdown_file():
     md_file = open("sound_lib.md").read()
     lines = md_file.split("\n")
     function_list = {}
+
+    DESC_BIT        = (1 << 0)
+    RETURN_BIT      = (1 << 1)
+    SEE_ALSO_BIT    = (1 << 2)
+    flags = 0
+
 
     current_function = ""
     current_desc = ""
@@ -140,15 +185,13 @@ def parse_markdown_file():
         parsed_lines += 1
 
         if l.startswith("### Returns"):
-            in_return = True
-            in_desc = False
-            in_see_also = False
+            flags = 0
+            flags |= RETURN_BIT
             continue
 
         if l.startswith("### See Also"):
-            in_see_also = True
-            in_return = False
-            in_desc = False
+            flags = 0
+            flags |= SEE_ALSO_BIT
             continue
 
         if l.startswith("## "):
@@ -165,19 +208,18 @@ def parse_markdown_file():
             current_return = ""
             current_brief = ""
             current_see_also = ""
-            in_desc = True
-            in_return = False
-            in_see_also = False
+            flags = 0
+            flags |= DESC_BIT
             parsed_lines = 0
         else:
-            if in_desc:
+            if flags & DESC_BIT:
                 if parsed_lines == 1:
                     current_brief = l
                 else:
                     current_desc += l + "\n"
 
-            if in_return: current_return += l + "\n"
-            if in_see_also: current_see_also += l
+            if flags & RETURN_BIT: current_return += l + "\n"
+            if flags & SEE_ALSO_BIT: current_see_also += l
 
 
     # Add the final function
@@ -272,7 +314,7 @@ def generate_links(sb, function_list):
     sb.write("</ul>\n")
 
 
-def generate_html(output_name, function_list, header_functions):
+def generate_html(output_name, function_list, header):
     sb = string_builder()
 
     style = string_builder()
@@ -320,7 +362,7 @@ def generate_html(output_name, function_list, header_functions):
         width: 80vw;
         margin: auto;
         overflow-wrap: break-word;
-        #font-family: sans;
+        font-family: sans;
     }
 
     hr {
@@ -342,6 +384,11 @@ def generate_html(output_name, function_list, header_functions):
     </style>
     """
     )
+
+    # Header variables
+    header_functions = header.functions
+    header_structs = header.structs
+
 
     title_heading = "Sound Lib Documentation"
 
@@ -462,9 +509,9 @@ def generate_html(output_name, function_list, header_functions):
 
 
 function_list = parse_markdown_file()
-header_functions = parse_header()
+header = parse_header()
 
-generate_html("sound_lib.html", function_list, header_functions)
+generate_html("sound_lib.html", function_list, header)
 
 
 # https://stackoverflow.com/questions/4151743/how-can-i-change-the-thickness-of-my-hr-tag
