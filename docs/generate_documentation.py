@@ -327,6 +327,10 @@ def generate_html(output_name, function_list, header_functions):
         max-width: 85ch;
     }
 
+    a:active {
+        color: purple;
+    }
+
     </style>
     """
     )
@@ -359,9 +363,18 @@ def generate_html(output_name, function_list, header_functions):
     sb.write("<h1>%s</h1>\n", title_heading)
     sb.write("</center>\n")
 
+    # Sort the function list based on the header order, rather than the documentation order.
+    tmp = {}
+    for func in header_functions:
+        if func in function_list:
+            tmp[func] = function_list[func]
+
+    function_list = tmp
+
 
     generate_links(sb, function_list)
     sb.write("<hr>\n")
+
 
     # Generate name, syntax, and description
     for func, attributes in function_list.items():

@@ -145,13 +145,13 @@ SOUNDAPI void Channel_SetVolume(int channel_index, float volume);
 SOUNDAPI void Channel_SetPan(int channel_index, float pan);
 SOUNDAPI void Channel_SetPitch(int channel_index, float pitch);
 SOUNDAPI bool Channel_IsPlaying(int channel_index);
+SOUNDAPI float Channel_GetPlayCursor(int channel_index);
+SOUNDAPI bool Channel_SetPlayCursor(int channel_index, float milliseconds);
+SOUNDAPI float Channel_GetPlayingTime(int channel_index);
 SOUNDAPI float Channel_GetPlayCursorMS(int channel_index);
 SOUNDAPI bool Channel_SetPlayCursorMS(int channel_index, float milliseconds);
 SOUNDAPI float Channel_GetPlayingTimeMS(int channel_index);
 
-SOUNDAPI float Channel_GetPlayCursor(int channel_index);
-SOUNDAPI bool Channel_SetPlayCursor(int channel_index, float milliseconds);
-SOUNDAPI float Channel_GetPlayingTime(int channel_index);
 
 
 // Incomplete for now, do not use!

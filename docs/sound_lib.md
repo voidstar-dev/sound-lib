@@ -59,6 +59,9 @@ Pass -1 as the `channel_index` to automatically find a free channel.
 ### Returns
 The channel index on success, or -1 on failure.
 
+### See Also
+Channel_PlayEx
+
 ## Channel_PlayEx
 Bind a buffer to the channel and play it, resampling to the default device format.
 If any combination of sample_rate, format, or channels are non-zero, then the library will resample the buffer
@@ -70,6 +73,9 @@ Pass -1 as the `channel_index` to automatically find a free channel.
 
 ### Returns
 The channel index on success, or -1 on failure.
+
+### See Also
+Channel_Play
 
 ## Channel_Stop
 Stop the channel.
