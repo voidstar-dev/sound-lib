@@ -330,10 +330,6 @@ def generate_links(sb, function_list):
         sb.write("</li>")
     sb.write("</ul>\n")
 
-# def generate_codeblock(sb, text):
-    # sb.write("<div class=\"codeblock\">\n")
-    # sb.write("<code class=\"sourcecode\">%s</code>\n", text)
-    # sb.write("</div>\n")
 
 def generate_structs(sb, structs):
     for name, desc in structs.items():
