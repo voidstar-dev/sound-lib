@@ -12,7 +12,10 @@
 # The "See Also" section should contain one or more lines, with each line containing the name of a single function.
 
 
+# =============================================================================
+
 # .md syntax
+
 # ## <Function Name>
 # <Brief>
 # <Desc>
@@ -21,15 +24,19 @@
 # ### Returns
 # <Optional return desc>
 
+
 # ### See Also
 # <Optional see also desc>
+
 
 # See sound_lib.md for examples.
 
 
 # The 'Returns' and 'See Also' headings are optional.
 # Currently, we do a simple check on the function signature. If the return type is not void,
-# we warn if the 'Returns' heading is missing.
+# we warn that the 'Returns' heading is missing.
+
+# =============================================================================
 
 
 
@@ -401,6 +408,7 @@ def generate_html(output_name, function_list, header_functions):
         else:
             warn("Function %s is missing from the header\n", func)
             continue
+
 
         # Return type
         # Todo: Pre-parse the return type

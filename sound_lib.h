@@ -130,6 +130,9 @@ typedef struct Sound_Spec
 
 } Sound_Spec;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 SOUNDAPI bool Audio_Init(void);
 SOUNDAPI bool Audio_InitEx(const Sound_Spec *spec);
@@ -164,4 +167,8 @@ SOUNDAPI void Sound_Stop(Sound *sound);
 // Not officially part of the API, but still needed for the test programs.
 SOUNDAPI void ma_sleep(ma_uint32 milliseconds);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
