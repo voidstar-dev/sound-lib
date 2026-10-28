@@ -534,6 +534,12 @@ def generate_html(output_name, function_list, header):
     # Not sure where these should go. Maybe a different page?
     # The internal details of these structs are not important for most general use.
     # At the moment, only Sound_Spec is of any relevance.
+    sb.write("<center>")
+    sb.write("<h1>Structs</h1>")
+    sb.write("</center>")
+    text = "I'm not sure where to put these yet. The only one of real relevance for API users at the moment is Sound_Spec."
+    text = replace_function_links(text, function_list, header)
+    sb.write("<p>%s</p>", text)
     generate_structs(sb, header.structs)
 
     # Footer
