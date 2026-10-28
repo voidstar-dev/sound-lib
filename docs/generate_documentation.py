@@ -99,7 +99,7 @@ def parse_function_signature(line: str):
 
 def parse_header():
     # Parse the header for function names and the signature
-    header = open("../sound_lib.h").read()
+    header = open("../src/sound_lib.h").read()
     header_lines = header.split("\n")
     header_functions = {}
 

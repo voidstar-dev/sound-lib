@@ -12,6 +12,6 @@ if [ $rc -ne 0 ]; then
     cat log.txt
 fi
 
-gcc -g3 test_raw_audio.c -L./bin_linux_x64 -lsound_lib -o current -Wl,-rpath,.
-cp bin_linux_x64/libsound_lib.so .
+#gcc -g3 test_raw_audio.c -L./bin_linux_x64 -lsound_lib -o current -Wl,-rpath,.
+#cp bin_linux_x64/libsound_lib.so .
 

@@ -1,3 +1,32 @@
+All music sound effect files are licensed under CC0.
+
+==============================
+blade.wav
 https://opengameart.org/content/80-cc0-rpg-sfx
+Modifications:
+- None
 
 
+==============================
+sample.wav
+https://opengameart.org/content/nes-shooter-music-5-tracks-3-jingles
+Modifications:
+- Originally named "Map.wav"
+- Trimmed and faded out in audacity.
+- Converted to flac, ogg, mp3 with ffmpeg.
+
+
+==============================
+sample2.wav
+https://opengameart.org/content/12-music-loops
+Modifications:
+- Originally named "399 [Misc Extras] bgm_storytime.ogg"
+- Trimmed and faded out in audacity.
+- Converted to wav with audacity, ogg, mp3 with ffmpeg.
+- Converted to raw audio with SDL2.
+
+==============================
+microwave.wav
+https://opengameart.org/content/various-sound-effects
+Modifications:
+- None

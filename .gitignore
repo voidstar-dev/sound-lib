@@ -8,3 +8,5 @@ tags
 build_*/
 build_*/
 bin_*
+sync.sh
+sync_demo.sh

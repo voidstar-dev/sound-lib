@@ -49,13 +49,24 @@ if(SOUND_LIB_ROOT_PROJECT)
     find_package(SDL2 QUIET)
 endif()
 
+# https://stackoverflow.com/questions/2152077/is-it-possible-to-get-cmake-to-build-both-a-static-and-shared-library-at-the-sam
 # The library itself
+# We do a 2-step process here.
+# 1. Compile the objects as an object library
 set(SOUND_SOURCES src/sound_lib.c src/miniaudio.c src/extras/stb_vorbis.c)
 set(TEST_SOURCES test.c)
-add_library(sound_lib SHARED ${SOUND_SOURCES})
+add_library(sound_lib_objs OBJECT ${SOUND_SOURCES})
+set_property(TARGET sound_lib_objs PROPERTY POSITION_INDEPENDENT_CODE 1)
+
+# 2. Link them into a shared library.
+set(SOUND_LIB_OBJECTS $<TARGET_OBJECTS:sound_lib_objs>)
+add_library(sound_lib SHARED ${SOUND_LIB_OBJECTS})
 target_link_libraries(sound_lib PRIVATE ${SOUND_LIB_SHARED_LIBS})
 target_compile_options(sound_lib PRIVATE ${SOUND_LIB_WARNINGS} ${SOUND_LIB_CFLAGS})
 target_link_options(sound_lib PRIVATE ${SOUND_LIB_LDFLAGS})
+
+# Rationale: We can re-use the object files when compling the examples.
+# This way, the example programs don't depend on a shared library being around.
 
 # If we're using mingw, keep to the Windows library conventions
 # https://stackoverflow.com/questions/31038963/how-do-you-rename-a-library-filename-in-cmake

@@ -511,7 +511,7 @@ SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_coun
     return Channel_PlayInternal(channel_index, buffer, loop_count, 0, 0, 0, 0, 0);
 }
 
-SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio)
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, int channels, ma_format format, bool raw_audio)
 {
     return Channel_PlayInternal(channel_index, buffer, loop_count, 0, sample_rate, format, channels, raw_audio);
 }

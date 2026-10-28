@@ -142,7 +142,7 @@ SOUNDAPI Sound_Buffer *SoundBuffer_Load(const char *filepath);
 SOUNDAPI Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);
 SOUNDAPI void SoundBuffer_Free(Sound_Buffer *buffer);
 SOUNDAPI int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);
-SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio);
+SOUNDAPI int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, int channels, ma_format format, bool raw_audio);
 SOUNDAPI void Channel_Stop(int channel_index);
 SOUNDAPI void Channel_SetVolume(int channel_index, float volume);
 SOUNDAPI void Channel_SetPan(int channel_index, float pan);
