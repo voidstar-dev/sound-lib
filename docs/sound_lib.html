@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+
+    <style>
+    .desc {
+      #margin: 0px;
+      #margin-left: 16px;
+    }
+
+    .sourcecode {
+        font-size: 16px;
+        width: 80%;
+    }
+
+    /* Old school 3D button-style border */
+    .border-3d {
+        border-width: 2px;
+        border-top-color: #999999;
+        border-left-color: #999999;
+        border-bottom-color: #EEEEEE;
+        border-right-color: #EEEEEE;
+        border-style: solid;
+    }
+
+    .codeblock {
+        width: 80%;
+        background-color: #DDDDDD;
+        padding: 8px;
+
+        /* Scrolling */
+        #white-space: nowrap;
+        #overflow-x: auto;
+    }
+
+    /* Not sure if I should be using px, or em for the font-size */
+    .inline-code {
+        padding: 0px;
+        font-weight: bold;
+    }
+
+    body {
+        width: 80vw;
+        margin: auto;
+        overflow-wrap: break-word;
+        #font-family: sans;
+    }
+
+    hr {
+        border: none;
+        height: 1px;
+        color: #333;
+        background-color: #333;
+    }
+
+    /* Enable word wrap */
+    p {
+        max-width: 85ch;
+    }
+
+    a:active {
+        color: purple;
+    }
+
+    </style>
+    
+<title>Sound Lib Documentation</title>
+</head>
+<body>
+<center>
+<h1>Sound Lib Documentation</h1>
+</center>
+<ul>
+<li><a href=#Audio_Init>Audio_Init</a>
+</li><li><a href=#Audio_InitEx>Audio_InitEx</a>
+</li><li><a href=#Audio_DeviceLock>Audio_DeviceLock</a>
+</li><li><a href=#Audio_DeviceUnlock>Audio_DeviceUnlock</a>
+</li><li><a href=#SoundBuffer_Load>SoundBuffer_Load</a>
+</li><li><a href=#SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</a>
+</li><li><a href=#SoundBuffer_Free>SoundBuffer_Free</a>
+</li><li><a href=#Channel_Play>Channel_Play</a>
+</li><li><a href=#Channel_PlayEx>Channel_PlayEx</a>
+</li><li><a href=#Channel_Stop>Channel_Stop</a>
+</li><li><a href=#Channel_SetVolume>Channel_SetVolume</a>
+</li><li><a href=#Channel_SetPan>Channel_SetPan</a>
+</li><li><a href=#Channel_SetPitch>Channel_SetPitch</a>
+</li><li><a href=#Channel_IsPlaying>Channel_IsPlaying</a>
+</li><li><a href=#Channel_GetPlayCursor>Channel_GetPlayCursor</a>
+</li><li><a href=#Channel_SetPlayCursor>Channel_SetPlayCursor</a>
+</li><li><a href=#Channel_GetPlayingTime>Channel_GetPlayingTime</a>
+</li><li><a href=#Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</a>
+</li><li><a href=#Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</a>
+</li><li><a href=#Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</a>
+</li></ul>
+<hr>
+
+<h2 id=Audio_Init>Audio_Init</h2>
+<p>Initialise the audio library with sensible defaults.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">bool Audio_Init(void);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns true on success, or false on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">The current defaults are: 44100 hz, 2 channel, 32-bit floating point audio.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Audio_InitEx>Audio_InitEx</a></li>
+</ul>
+<hr>
+
+<h2 id=Audio_InitEx>Audio_InitEx</h2>
+<p>Initialise the audio library with user-provided parameters.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">bool Audio_InitEx(const Sound_Spec *spec);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns true on success, or false on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">The format is currently hardcoded to be 32-bit floating point.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Audio_Init>Audio_Init</a></li>
+</ul>
+<hr>
+
+<h2 id=Audio_DeviceLock>Audio_DeviceLock</h2>
+<p>Lock the audio device mutex.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Audio_DeviceLock(void);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">Note that locking on the same thread multiple times while the lock is already held is currently not supported, and will result in a deadlock! The re-entrant behaviour of a lock is called a recursive mutex.</p>
+<hr>
+
+<h2 id=Audio_DeviceUnlock>Audio_DeviceUnlock</h2>
+<p>Unlock the audio device mutex.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Audio_DeviceUnlock(void);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=SoundBuffer_Load>SoundBuffer_Load</h2>
+<p>Load a sound into memory from a file.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">Sound_Buffer *SoundBuffer_Load(const char *filepath);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns a valid pointer to a Sound_Buffer, or NULL on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">Free the buffer with <a href=#SoundBuffer_Free>SoundBuffer_Free</a>.</p>
+<hr>
+
+<h2 id=SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</h2>
+<p>Load a sound into memory from other memory.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">Sound_Buffer *SoundBuffer_LoadFromMemory(const void *data, ma_uint32 size);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns a valid pointer to a Sound_Buffer, or NULL on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">Upon returning, the original data is no longer needed and can be freed if necessary. Free the buffer with <a href=#SoundBuffer_Free>SoundBuffer_Free</a>.</p>
+<hr>
+
+<h2 id=SoundBuffer_Free>SoundBuffer_Free</h2>
+<p>Free the sound buffer.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void SoundBuffer_Free(Sound_Buffer *buffer);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">This function will also stop any channels that were using this buffer.</p>
+<hr>
+
+<h2 id=Channel_Play>Channel_Play</h2>
+<p>Bind a buffer to the channel and play it, resampling to the default device format.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">int Channel_Play(int channel_index, Sound_Buffer *buffer, int loop_count);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the channel index on success, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">This function expects that the buffer data is in some sort of decodable container (.WAV, .MP3)... If you want to play raw, uncompressed data, then call <a href=#Channel_PlayEx>Channel_PlayEx</a>() with <span class="inline-code">raw_audio</span> set to <span class="inline-code">true</span>. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_PlayEx>Channel_PlayEx</a></li>
+</ul>
+<hr>
+
+<h2 id=Channel_PlayEx>Channel_PlayEx</h2>
+<p>Bind a buffer to the channel and play it, resampling to the default device format.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">int Channel_PlayEx(int channel_index, Sound_Buffer *buffer, int loop_count, int sample_rate, ma_format format, int channels, bool raw_audio);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the channel index on success, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">If any combination of sample_rate, format, or channels are non-zero, then the library will resample the buffer to that specification, and then again to the output device format. If <span class="inline-code">raw_audio</span> is true, then this indicates that the buffer contains uncompressed raw audio data. In this case, <span class="inline-code">sample_rate</span>, <span class="inline-code">format</span>, and <span class="inline-code">channels</span> _must_ be specified. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_Play>Channel_Play</a></li>
+</ul>
+<hr>
+
+<h2 id=Channel_Stop>Channel_Stop</h2>
+<p>Stop the channel.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Channel_Stop(int channel_index);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=Channel_SetVolume>Channel_SetVolume</h2>
+<p>Set the channel volume.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Channel_SetVolume(int channel_index, float volume);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">The range is typically 0 to 1 (a normalised floating point value). Values exceeding 1 are allowed, but not recommended.</p>
+<hr>
+
+<h2 id=Channel_SetPan>Channel_SetPan</h2>
+<p>Set the channel pan. Values are in the range of -1 (left) to 1 (right).</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Channel_SetPan(int channel_index, float pan);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=Channel_SetPitch>Channel_SetPitch</h2>
+<p>Set the channel pitch. Values begin at 0.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">void Channel_SetPitch(int channel_index, float pitch);</code>
+</div>
+<br>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=Channel_IsPlaying>Channel_IsPlaying</h2>
+<p>Returns true if the channel is playing.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">bool Channel_IsPlaying(int channel_index);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns true if the channel is playing, or false otherwise.</p>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=Channel_GetPlayCursor>Channel_GetPlayCursor</h2>
+<p>Get the current timestamp of the playing sound in milliseconds.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">float Channel_GetPlayCursor(int channel_index);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the current play cursor of the channel's buffer in milliseconds, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">More user-friendly name for <a href=#Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</a>.</p>
+<hr>
+
+<h2 id=Channel_SetPlayCursor>Channel_SetPlayCursor</h2>
+<p>Seek to the specified time (milliseconds) in the buffer being played by the channel.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">bool Channel_SetPlayCursor(int channel_index, float milliseconds);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns true on success, or false on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">More user-friendly name for <a href=#Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</a>.</p>
+<hr>
+
+<h2 id=Channel_GetPlayingTime>Channel_GetPlayingTime</h2>
+<p>Get the total amount of time (milliseconds) since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">float Channel_GetPlayingTime(int channel_index);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the total amount of milliseconds since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">More user-friendly name for <a href=#Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</a>.</p>
+<hr>
+
+<h2 id=Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</h2>
+<p>Get the current timestamp of the playing sound in milliseconds.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">float Channel_GetPlayCursorMS(int channel_index);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the current play cursor of the channel's buffer in milliseconds, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">For looping sounds, this value will wrap around.</p>
+<hr>
+
+<h2 id=Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</h2>
+<p>Seek to the specified time (milliseconds) in the buffer being played by the channel.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">bool Channel_SetPlayCursorMS(int channel_index, float milliseconds);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns true on success, or false on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+
+<h2 id=Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</h2>
+<p>Get the total amount of time (milliseconds) since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called.</p>
+<h3>Syntax</h3>
+<div class="codeblock">
+<code class="sourcecode">float Channel_GetPlayingTimeMS(int channel_index);</code>
+</div>
+<br>
+<h3>Return Value</h3>
+<p>Returns the total amount of milliseconds since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called, or -1 on failure.</p>
+<h3>Remarks</h3>
+<p class="desc">None.</p>
+<hr>
+<footer>
+<center>
+<p>
+Generated by <i>generate_documentation.py</i> on <i>2026-10-28</i>
+</p>
+</center>
+</footer>
+</body>
+</html>
