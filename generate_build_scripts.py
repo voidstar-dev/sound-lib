@@ -1,6 +1,8 @@
 # Generates simple, one line build scripts that don't rely on external build tools
 import os
 
+SCRIPT_DIR = "build_scripts"
+
 class string_builder:
     def __init__(self):
         self.buf = ""
@@ -29,6 +31,13 @@ def make_executable(fname):
     os.chmod(fname, mode)
 
 
+def write_script(name, data):
+    name = SCRIPT_DIR + "/" + name
+    f = open(name, "w")
+    f.write(data)
+    f.close()
+
+
 LIB_NAME = "sound_lib"
 SOURCES = "sound_lib.c miniaudio.c extras/stb_vorbis.c"
 
@@ -45,7 +54,7 @@ def generate_script_linux(config):
     sb.write("CC=%s\n", CC)
     sb.write("$CC %s %s %s -o %s%s%s\n", CFLAGS, LDFLAGS, SOURCES, PREFIX, LIB_NAME, SUFFIX)
 
-    write_entire_file(fname, sb.data())
+    write_script(fname, sb.data())
     make_executable(fname)
 
 def generate_script_win(config):
@@ -55,7 +64,7 @@ def generate_script_win(config):
     sb = string_builder()
     sb.write("@echo off\n")
     sb.write("cl /LD /O2 %s\n", SOURCES)
-    write_entire_file(fname, sb.data())
+    write_script(fname, sb.data())
 
 
 def generate_build_scripts():
@@ -80,6 +89,8 @@ def generate_build_scripts():
     msvc_config = {
         "FNAME": "build_cl_x64.bat"
     }
+
+    os.makedirs(SCRIPT_DIR, exist_ok = True)
 
     generate_script_linux(linux_config)
     generate_script_linux(mingw_config)
