@@ -1,7 +1,7 @@
 # Generates simple, one line build scripts that don't rely on external build tools
 import os
 
-SCRIPT_DIR = "build_scripts"
+SCRIPT_DIR = "scripts"
 
 class string_builder:
     def __init__(self):
@@ -23,20 +23,22 @@ def sprintf(fmt, *args):
     s = fmt % args
     return s
 
+def final_name(fname):
+    return fname
 
 def make_executable(fname):
-    # Note: Time of use / access bug-prone
     mode = os.stat(fname).st_mode
     mode |= 0o700
     os.chmod(fname, mode)
 
 
-def write_script(name, data):
+def write_script(name, data, executable = True):
     name = SCRIPT_DIR + "/" + name
     f = open(name, "w")
     f.write(data)
     f.close()
 
+    if(executable): make_executable(name)
 
 LIB_NAME = "sound_lib"
 SOURCES = "sound_lib.c miniaudio.c extras/stb_vorbis.c"
@@ -55,7 +57,6 @@ def generate_script_linux(config):
     sb.write("$CC %s %s %s -o %s%s%s\n", CFLAGS, LDFLAGS, SOURCES, PREFIX, LIB_NAME, SUFFIX)
 
     write_script(fname, sb.data())
-    make_executable(fname)
 
 def generate_script_win(config):
     fname = config["FNAME"]
@@ -64,7 +65,7 @@ def generate_script_win(config):
     sb = string_builder()
     sb.write("@echo off\n")
     sb.write("cl /LD /O2 %s\n", SOURCES)
-    write_script(fname, sb.data())
+    write_script(fname, sb.data(), False)
 
 
 def generate_build_scripts():
