@@ -385,6 +385,12 @@ static int Channel_PlayInternal(int channel_index, Sound_Buffer *buffer, int loo
     Sound_Channel *c = 0;
     int index_out = -1;
 
+    // Return right away on a NULL buffer.
+    if(!buffer)
+    {
+        return -1;
+    }
+
     Audio_DeviceLock();
 
     if(channel_index == -1)
