@@ -1,9 +1,10 @@
 # Examples for sound_lib
 # Intended to be built from the root sound_lib folder as a subdirectory project.
 
+# Uses the root project variables for these examples
+
 set(LIB_SOURCES ${SOUND_LIB_OBJECTS})
 
-# Use the root project variables for these examples
 # We're also linking against this library statically with an object library
 set(EXAMPLE_SHARED_LIBS ${SOUND_LIB_SHARED_LIBS})
 set(INCLUDE_DIR ../src)

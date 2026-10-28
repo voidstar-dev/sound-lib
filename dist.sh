@@ -31,7 +31,13 @@ generate_build_scripts()
     python generate_build_scripts.py
 }
 
+zip_release_folder()
+{
+    zip -u -r sound_lib.zip sound_lib/*
+}
+
 generate_build_scripts
 configure
 compile
 build_docs
+zip_release_folder
