@@ -122,7 +122,10 @@ typedef struct Sound_Config
 
 typedef struct Sound_Spec
 {
+    // Sample rate in hz
     int rate;
+
+    // Number of channels
     int channels;
 
     // For now, format is always hardcoded to ma_format_f32, but it's here for potential future ABI compatability

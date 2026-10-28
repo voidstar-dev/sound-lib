@@ -115,7 +115,8 @@ def parse_header():
     regex = None
 
     for line in header_lines:
-        if len(line) == 0: continue
+        # Blank lines are significant in struct readability
+        if not in_struct and len(line) == 0: continue
 
         # Try to parse struct
         if line.startswith("typedef struct"):
@@ -140,6 +141,7 @@ def parse_header():
                 assert(struct_name not in structs)
                 structs[struct_name] = struct_text
         else:
+            # Try to parse a function
             func_name, func_signature, found = parse_function_signature(line)
             if found:
                 header_functions[func_name] = func_signature
@@ -219,7 +221,7 @@ def parse_markdown_file():
                     current_desc += l + "\n"
 
             if flags & RETURN_BIT: current_return += l + "\n"
-            if flags & SEE_ALSO_BIT: current_see_also += l
+            if flags & SEE_ALSO_BIT: current_see_also += l + "\n"
 
 
     # Add the final function
@@ -244,11 +246,12 @@ def find_best_match(token, keywords):
                 best = k
     return best
 
-def replace_function_links(desc, function_list):
+
+def replace_link_in_list(desc, items):
     new_desc = string_builder()
     words = desc.split()
     for w in words:
-        match = find_best_match(w, function_list)
+        match = find_best_match(w, items)
         if match:
             link = sprintf("<a href=#%s>%s</a>", match, match)
             w = w.replace(match, link)
@@ -256,6 +259,20 @@ def replace_function_links(desc, function_list):
         new_desc.write("%s ", w)
 
     return new_desc.data().strip()
+
+def replace_function_links(desc, function_list, header):
+    a = desc
+    b = desc
+
+    # We check each list of identifiers
+    identifiers = [function_list, header.structs]
+
+    for item in identifiers:
+        result = replace_link_in_list(desc, item)
+        if result != desc: return result
+
+    return desc
+
 
 def format_markdown(text):
     # Match backticks
@@ -271,25 +288,25 @@ def format_markdown(text):
 
 # Replace function names appearing in descriptions with links
 # We find the longest match for the given function
-def generate_remarks(sb, desc, function_list):
-    desc = replace_function_links(desc, function_list)
+def generate_remarks(sb, desc, function_list, header):
+    desc = replace_function_links(desc, function_list, header)
     desc = format_markdown(desc)
     sb.write("<h3>Remarks</h3>\n")
     if not desc:
         desc = "None."
     sb.write("<p class=\"desc\">%s</p>\n", desc)
 
-def generate_see_also(sb, see_also, function_list):
+def generate_see_also(sb, see_also, function_list, header):
     lines = see_also.split("\n")
     tmp = string_builder()
     for l in lines:
         if not l: continue
 
-        if l in function_list:
-            l = replace_function_links(l, function_list)
+        if l in function_list or l in header.structs:
+            l = replace_function_links(l, function_list, header)
             tmp.write("%s\n", l)
         else:
-            warn("'See Also' line '%s' is not a function!\n", l)
+            warn("'See Also' line '%s' is not a function or struct!\n", l)
 
     data = tmp.data()
 
@@ -313,6 +330,20 @@ def generate_links(sb, function_list):
         sb.write("</li>")
     sb.write("</ul>\n")
 
+# def generate_codeblock(sb, text):
+    # sb.write("<div class=\"codeblock\">\n")
+    # sb.write("<code class=\"sourcecode\">%s</code>\n", text)
+    # sb.write("</div>\n")
+
+def generate_structs(sb, structs):
+    for name, desc in structs.items():
+        sb.write("<h2 id=%s>%s</h2>\n", name, name)
+
+        sb.write("<div class=\"structblock\">\n")
+        sb.write("<code class=\"structcode\">%s</code>\n", desc)
+        sb.write("</div>\n")
+        sb.write("<br>\n")
+        sb.write("<hr>\n")
 
 def generate_html(output_name, function_list, header):
     sb = string_builder()
@@ -325,6 +356,23 @@ def generate_html(output_name, function_list, header):
     .desc {
       #margin: 0px;
       #margin-left: 16px;
+    }
+
+
+    .structcode {
+        font-size: 16px;
+        width: 80%;
+        white-space: pre;
+    }
+
+    /* structblock is essentially the same as codeblock, except we allow horizontal scrolling */
+    .structblock {
+        width: 80%;
+        background-color: #DDDDDD;
+        padding: 8px;
+
+        /* Scrolling */
+        overflow-x: auto;
     }
 
     .sourcecode {
@@ -346,11 +394,8 @@ def generate_html(output_name, function_list, header):
         width: 80%;
         background-color: #DDDDDD;
         padding: 8px;
-
-        /* Scrolling */
-        #white-space: nowrap;
-        #overflow-x: auto;
     }
+    
 
     /* Not sure if I should be using px, or em for the font-size */
     .inline-code {
@@ -441,7 +486,7 @@ def generate_html(output_name, function_list, header):
         see_also = attributes.see_also
 
         # Brief one-line summary
-        brief = replace_function_links(brief, function_list)
+        brief = replace_function_links(brief, function_list, header)
         sb.write("<p>%s</p>\n", brief);
 
 
@@ -466,7 +511,7 @@ def generate_html(output_name, function_list, header):
             if return_type != "void":
                 sb.write("<h3>Return Value</h3>\n")
                 # Lowercase the first word since we always prefix the sentence with "Returns"
-                return_desc = replace_function_links(return_desc, function_list)
+                return_desc = replace_function_links(return_desc, function_list, header)
                 letter = return_desc[0].lower()
                 sb.write("<p>Returns %c%s</p>\n", letter, return_desc[1:])
             else:
@@ -475,9 +520,9 @@ def generate_html(output_name, function_list, header):
             if return_type != "void":
                 warn("Function %s is missing a 'return' section\n", func)
 
-        generate_remarks(sb, remarks, function_list)
+        generate_remarks(sb, remarks, function_list, header)
 
-        generate_see_also(sb, see_also, function_list)
+        generate_see_also(sb, see_also, function_list, header)
 
 
         
@@ -485,6 +530,11 @@ def generate_html(output_name, function_list, header):
 
         sb.write("<hr>\n")
 
+    # Structs
+    # Not sure where these should go. Maybe a different page?
+    # The internal details of these structs are not important for most general use.
+    # At the moment, only Sound_Spec is of any relevance.
+    generate_structs(sb, header.structs)
 
     # Footer
     sb.write("<footer>\n")

@@ -9,6 +9,23 @@
       #margin-left: 16px;
     }
 
+
+    .structcode {
+        font-size: 16px;
+        width: 80%;
+        white-space: pre;
+    }
+
+    /* structblock is essentially the same as codeblock, except we allow horizontal scrolling */
+    .structblock {
+        width: 80%;
+        background-color: #DDDDDD;
+        padding: 8px;
+
+        /* Scrolling */
+        overflow-x: auto;
+    }
+
     .sourcecode {
         font-size: 16px;
         width: 80%;
@@ -28,11 +45,8 @@
         width: 80%;
         background-color: #DDDDDD;
         padding: 8px;
-
-        /* Scrolling */
-        #white-space: nowrap;
-        #overflow-x: auto;
     }
+    
 
     /* Not sure if I should be using px, or em for the font-size */
     .inline-code {
@@ -126,6 +140,7 @@
 <h3>See Also</h3>
 <ul>
 <li><a href=#Audio_Init>Audio_Init</a></li>
+<li><a href=#Sound_Spec>Sound_Spec</a></li>
 </ul>
 <hr>
 
@@ -355,6 +370,129 @@
 <p>Returns the total amount of milliseconds since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called, or -1 on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<hr>
+<h2 id=Sound_Buffer>Sound_Buffer</h2>
+<div class="structblock">
+<code class="structcode">typedef struct Sound_Buffer
+{
+    // Private data, do not touch!
+
+    // Raw data of the file
+    void *data;
+
+    // The size of the file
+    size_t size;
+
+    // How this data was allocated
+    int allocation_type;
+
+} Sound_Buffer;
+</code>
+</div>
+<br>
+<hr>
+<h2 id=Sound_Channel>Sound_Channel</h2>
+<div class="structblock">
+<code class="structcode">typedef struct Sound_Channel
+{
+    ma_sound sound_handle;
+
+
+    // We support either loading through a decoder, or streaming raw, uncompressed audio data.
+    // Note: These should really be in a union
+    // However, for easier uninitialization, we keep these separate so that a zeroed out struct is valid
+    ma_decoder decoder;
+    ma_audio_buffer_ref_wrapper ref;
+
+
+    // The buffer that's currently playing on this channel
+    Sound_Buffer *buffer;
+
+    // The sound that's currently playing on this channel
+    Sound *sound;
+
+    // Playing status (SOUND_STATUS_*)
+    int status;
+
+    int loop_count;
+    int max_loops;
+
+    // A reference to its own index
+    int index;
+
+    // Volume ranges from 0 to 1
+    float volume;
+
+    // Pan ranges from -1 to 1
+    float pan;
+
+    // Pitch ranges from 0 to 1 (affects speed as well)
+    float pitch;
+
+    // Use ma_audio_buffer_ref as an audio source rather than the decoder.
+    bool use_raw_audio;
+
+} Sound_Channel;
+</code>
+</div>
+<br>
+<hr>
+<h2 id=Sound>Sound</h2>
+<div class="structblock">
+<code class="structcode">typedef struct Sound
+{
+    Sound_Channel *channel;
+    Sound_Buffer *buffer;
+
+    float volume;
+    float pan;
+    float pitch;
+
+    // SOUND_STATUS_*
+    int status;
+
+} Sound;
+</code>
+</div>
+<br>
+<hr>
+<h2 id=Sound_Config>Sound_Config</h2>
+<div class="structblock">
+<code class="structcode">typedef struct Sound_Config
+{
+    int rate;
+    int channels;
+    ma_format format;
+    ma_decoder_config decoder_config;
+    ma_device device;
+
+    // Global mutex
+    ma_mutex mutex;
+
+    ma_engine engine;
+
+} Sound_Config;
+</code>
+</div>
+<br>
+<hr>
+<h2 id=Sound_Spec>Sound_Spec</h2>
+<div class="structblock">
+<code class="structcode">typedef struct Sound_Spec
+{
+    // Sample rate in hz
+    int rate;
+
+    // Number of channels
+    int channels;
+
+    // For now, format is always hardcoded to ma_format_f32, but it's here for potential future ABI compatability
+    ma_format format;
+
+} Sound_Spec;
+</code>
+</div>
+<br>
 <hr>
 <footer>
 <center>

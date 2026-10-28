@@ -18,6 +18,7 @@ true on success, or false on failure.
 
 ### See Also
 Audio_Init
+Sound_Spec
 
 
 
