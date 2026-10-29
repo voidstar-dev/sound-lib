@@ -148,9 +148,9 @@ def parse_header():
 
 
 
-    header = Header(header_functions, structs)
+    result = Header(header_functions, structs)
 
-    return header
+    return result
 
 
 class function_attributes():
@@ -177,9 +177,6 @@ def parse_markdown_file():
     current_return = ""
     current_brief = ""
     current_see_also = ""
-    in_desc = False
-    in_return = False
-    in_see_also = False
     parsed_lines = 0
 
     for l in lines:
@@ -403,7 +400,7 @@ def generate_html(output_name, function_list, header):
         width: 80vw;
         margin: auto;
         overflow-wrap: break-word;
-        font-family: sans;
+        font-family: sans-serif;
     }
 
     hr {
