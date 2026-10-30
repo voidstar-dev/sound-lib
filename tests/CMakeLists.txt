@@ -38,3 +38,5 @@ if(SDL2_FOUND)
     target_compile_options(test_mouse PRIVATE ${SOUND_LIB_WARNINGS})
     list(APPEND TEST_TARGETS test_mouse)
 endif()
+
+file(COPY "../resources" DESTINATION ".")

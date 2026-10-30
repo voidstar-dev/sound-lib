@@ -2,8 +2,8 @@
 
 int main()
 {
-    #define BASE_SFX_NAME test/blade
-    #define BASE_MUS_NAME test/song
+    #define BASE_SFX_NAME resources/sample2
+    #define BASE_MUS_NAME resources/sample2
 
     #ifdef TEST_WAV
     #define EXT_NAME wav
@@ -31,6 +31,7 @@ int main()
     Sound_Buffer *mus;
     int i;
     int sleep_millis = 2000;
+    int channel;
 
     Audio_Init();
 
@@ -59,11 +60,12 @@ int main()
     {
         printf("===================================================\n");
         printf("> Playing '%s\n", sfx_file);
-        Channel_Play(-1, sfx, 0);
+        channel = Channel_Play(-1, sfx, 0);
         printf("> Sleeping %d milliseconds\n", sleep_millis);
         printf("===================================================\n");
         ma_sleep(sleep_millis);
         printf("\n");
+        Channel_Stop(channel);
     }
 
     if(mus)
@@ -76,6 +78,7 @@ int main()
         ma_sleep(sleep_millis);
 
         // Test sound freeing
+        printf("> Freeing sound buffer\n");
         SoundBuffer_Free(mus);
         ma_sleep(1000);
     }

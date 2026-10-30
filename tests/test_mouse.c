@@ -118,7 +118,7 @@ int main(int argc, char **argv)
     int mouse_y = 0;
     Sound_Buffer *buffer;
     int target_channel = 0;
-    const char *filename = "test/song.wav";
+    const char *filename = "resources/song.ogg";
     int channel_result;
     SDL_Color color1 = {0x00, 0xFF, 0x00, 0xFF};
     SDL_Color color2 = {0x00, 0x00, 0xFF, 0xFF};
