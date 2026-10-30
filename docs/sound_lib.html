@@ -5,30 +5,29 @@
 
     <style>
     .desc {
-      #margin: 0px;
-      #margin-left: 16px;
+
     }
 
+    .codeblock {
+        width: 80%;
+        background-color: #DDDDDD;
+        padding: 8px;
+    }
 
-    .structcode {
+    /* Not sure if I should be using px, or em for the font-size */
+    .sourcecode {
         font-size: 16px;
         width: 80%;
-        white-space: pre;
+        font-family: "Consolas", monospace;
     }
 
     /* structblock is essentially the same as codeblock, except we allow horizontal scrolling */
     .structblock {
-        width: 80%;
-        background-color: #DDDDDD;
-        padding: 8px;
-
-        /* Scrolling */
         overflow-x: auto;
     }
 
-    .sourcecode {
-        font-size: 16px;
-        width: 80%;
+    .structcode {
+        white-space: pre;
     }
 
     /* Old school 3D button-style border */
@@ -41,14 +40,7 @@
         border-style: solid;
     }
 
-    .codeblock {
-        width: 80%;
-        background-color: #DDDDDD;
-        padding: 8px;
-    }
-    
 
-    /* Not sure if I should be using px, or em for the font-size */
     .inline-code {
         padding: 0px;
         font-weight: bold;
@@ -59,6 +51,7 @@
         margin: auto;
         overflow-wrap: break-word;
         font-family: "Segoe UI", sans-serif;
+        #font-family: sans-serif;
     }
 
     hr {
@@ -74,6 +67,10 @@
     }
 
     a:active {
+        color: purple;
+    }
+
+    a:visited {
         color: purple;
     }
 
@@ -240,6 +237,7 @@
 <h3>See Also</h3>
 <ul>
 <li><a href=#Channel_PlayEx>Channel_PlayEx</a></li>
+<li><a href=#Channel_Stop>Channel_Stop</a></li>
 </ul>
 <hr>
 
@@ -257,6 +255,7 @@
 <h3>See Also</h3>
 <ul>
 <li><a href=#Channel_Play>Channel_Play</a></li>
+<li><a href=#Channel_Stop>Channel_Stop</a></li>
 </ul>
 <hr>
 
@@ -399,9 +398,9 @@
 <h3>Remarks</h3>
 <p class="desc">None.</p>
 <hr>
-<center><h1>Structs</h1></center><p>I'm not sure where to put these yet. The only one of real relevance for API users at the moment is <a href=#Sound_Spec>Sound_Spec</a>.</p><h2 id=Sound_Buffer>Sound_Buffer</h2>
-<div class="structblock">
-<code class="structcode">typedef struct Sound_Buffer
+<center><h1>Structs</h1></center><h2 id=Sound_Buffer>Sound_Buffer</h2>
+<div class="codeblock structblock">
+<code class="sourcecode structcode">typedef struct Sound_Buffer
 {
     // Private data, do not touch!
 
@@ -420,8 +419,8 @@
 <br>
 <hr>
 <h2 id=Sound_Channel>Sound_Channel</h2>
-<div class="structblock">
-<code class="structcode">typedef struct Sound_Channel
+<div class="codeblock structblock">
+<code class="sourcecode structcode">typedef struct Sound_Channel
 {
     ma_sound sound_handle;
 
@@ -466,8 +465,8 @@
 <br>
 <hr>
 <h2 id=Sound>Sound</h2>
-<div class="structblock">
-<code class="structcode">typedef struct Sound
+<div class="codeblock structblock">
+<code class="sourcecode structcode">typedef struct Sound
 {
     Sound_Channel *channel;
     Sound_Buffer *buffer;
@@ -485,8 +484,8 @@
 <br>
 <hr>
 <h2 id=Sound_Config>Sound_Config</h2>
-<div class="structblock">
-<code class="structcode">typedef struct Sound_Config
+<div class="codeblock structblock">
+<code class="sourcecode structcode">typedef struct Sound_Config
 {
     int rate;
     int channels;
@@ -505,8 +504,8 @@
 <br>
 <hr>
 <h2 id=Sound_Spec>Sound_Spec</h2>
-<div class="structblock">
-<code class="structcode">typedef struct Sound_Spec
+<div class="codeblock structblock">
+<code class="sourcecode structcode">typedef struct Sound_Spec
 {
     // Sample rate in hz
     int rate;

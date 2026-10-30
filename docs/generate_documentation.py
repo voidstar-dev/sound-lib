@@ -332,8 +332,8 @@ def generate_structs(sb, structs):
     for name, desc in structs.items():
         sb.write("<h2 id=%s>%s</h2>\n", name, name)
 
-        sb.write("<div class=\"structblock\">\n")
-        sb.write("<code class=\"structcode\">%s</code>\n", desc)
+        sb.write("<div class=\"codeblock structblock\">\n")
+        sb.write("<code class=\"sourcecode structcode\">%s</code>\n", desc)
         sb.write("</div>\n")
         sb.write("<br>\n")
         sb.write("<hr>\n")
@@ -347,30 +347,29 @@ def generate_html(output_name, function_list, header):
     """
     <style>
     .desc {
-      #margin: 0px;
-      #margin-left: 16px;
+
     }
 
+    .codeblock {
+        width: 80%;
+        background-color: #DDDDDD;
+        padding: 8px;
+    }
 
-    .structcode {
+    /* Not sure if I should be using px, or em for the font-size */
+    .sourcecode {
         font-size: 16px;
         width: 80%;
-        white-space: pre;
+        font-family: "Consolas", monospace;
     }
 
     /* structblock is essentially the same as codeblock, except we allow horizontal scrolling */
     .structblock {
-        width: 80%;
-        background-color: #DDDDDD;
-        padding: 8px;
-
-        /* Scrolling */
         overflow-x: auto;
     }
 
-    .sourcecode {
-        font-size: 16px;
-        width: 80%;
+    .structcode {
+        white-space: pre;
     }
 
     /* Old school 3D button-style border */
@@ -383,14 +382,7 @@ def generate_html(output_name, function_list, header):
         border-style: solid;
     }
 
-    .codeblock {
-        width: 80%;
-        background-color: #DDDDDD;
-        padding: 8px;
-    }
-    
 
-    /* Not sure if I should be using px, or em for the font-size */
     .inline-code {
         padding: 0px;
         font-weight: bold;
@@ -401,6 +393,7 @@ def generate_html(output_name, function_list, header):
         margin: auto;
         overflow-wrap: break-word;
         font-family: "Segoe UI", sans-serif;
+        #font-family: sans-serif;
     }
 
     hr {
@@ -416,6 +409,10 @@ def generate_html(output_name, function_list, header):
     }
 
     a:active {
+        color: purple;
+    }
+
+    a:visited {
         color: purple;
     }
 
@@ -530,9 +527,9 @@ def generate_html(output_name, function_list, header):
     sb.write("<center>")
     sb.write("<h1>Structs</h1>")
     sb.write("</center>")
-    text = "I'm not sure where to put these yet. The only one of real relevance for API users at the moment is Sound_Spec."
-    text = replace_function_links(text, function_list, header)
-    sb.write("<p>%s</p>", text)
+    # text = "I'm not sure where to put these yet. The only one of real relevance for API users at the moment is Sound_Spec."
+    # text = replace_function_links(text, function_list, header)
+    # sb.write("<p>%s</p>", text)
     generate_structs(sb, header.structs)
 
     # Footer

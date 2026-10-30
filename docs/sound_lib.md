@@ -80,6 +80,7 @@ The channel index on success, or -1 on failure.
 
 ### See Also
 Channel_PlayEx
+Channel_Stop
 
 ## Channel_PlayEx
 Bind a buffer to the channel and play it, resampling to the default device format.
@@ -95,6 +96,7 @@ The channel index on success, or -1 on failure.
 
 ### See Also
 Channel_Play
+Channel_Stop
 
 ## Channel_Stop
 Stop the channel.
