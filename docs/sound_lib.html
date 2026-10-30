@@ -58,14 +58,14 @@
         width: 80vw;
         margin: auto;
         overflow-wrap: break-word;
-        font-family: sans-serif;
+        font-family: "Segoe UI", sans-serif;
     }
 
     hr {
         border: none;
         height: 1px;
-        color: #333;
-        background-color: #333;
+        border-top: 1px solid;
+        border-color: #333;
     }
 
     /* Enable word wrap */
@@ -153,6 +153,10 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">Note that locking on the same thread multiple times while the lock is already held is currently not supported, and will result in a deadlock! The re-entrant behaviour of a lock is called a recursive mutex.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Audio_DeviceUnlock>Audio_DeviceUnlock</a></li>
+</ul>
 <hr>
 
 <h2 id=Audio_DeviceUnlock>Audio_DeviceUnlock</h2>
@@ -164,6 +168,10 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Audio_DeviceLock>Audio_DeviceLock</a></li>
+</ul>
 <hr>
 
 <h2 id=SoundBuffer_Load>SoundBuffer_Load</h2>
@@ -177,6 +185,11 @@
 <p>Returns a valid pointer to a Sound_Buffer, or NULL on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">Free the buffer with <a href=#SoundBuffer_Free>SoundBuffer_Free</a>.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</a></li>
+<li><a href=#SoundBuffer_Free>SoundBuffer_Free</a></li>
+</ul>
 <hr>
 
 <h2 id=SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</h2>
@@ -190,6 +203,11 @@
 <p>Returns a valid pointer to a Sound_Buffer, or NULL on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">Upon returning, the original data is no longer needed and can be freed if necessary. Free the buffer with <a href=#SoundBuffer_Free>SoundBuffer_Free</a>.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#SoundBuffer_Load>SoundBuffer_Load</a></li>
+<li><a href=#SoundBuffer_Free>SoundBuffer_Free</a></li>
+</ul>
 <hr>
 
 <h2 id=SoundBuffer_Free>SoundBuffer_Free</h2>
@@ -201,6 +219,11 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">This function will also stop any channels that were using this buffer.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#SoundBuffer_Load>SoundBuffer_Load</a></li>
+<li><a href=#SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_Play>Channel_Play</h2>
@@ -246,6 +269,11 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_Play>Channel_Play</a></li>
+<li><a href=#Channel_PlayEx>Channel_PlayEx</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_SetVolume>Channel_SetVolume</h2>
@@ -486,7 +514,7 @@
     // Number of channels
     int channels;
 
-    // For now, format is always hardcoded to ma_format_f32, but it's here for potential future ABI compatability
+    // Binary format of the audio
     ma_format format;
 
 } Sound_Spec;

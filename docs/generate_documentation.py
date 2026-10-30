@@ -400,14 +400,14 @@ def generate_html(output_name, function_list, header):
         width: 80vw;
         margin: auto;
         overflow-wrap: break-word;
-        font-family: sans-serif;
+        font-family: "Segoe UI", sans-serif;
     }
 
     hr {
         border: none;
         height: 1px;
-        color: #333;
-        background-color: #333;
+        border-top: 1px solid;
+        border-color: #333;
     }
 
     /* Enable word wrap */

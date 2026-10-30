@@ -128,7 +128,7 @@ typedef struct Sound_Spec
     // Number of channels
     int channels;
 
-    // For now, format is always hardcoded to ma_format_f32, but it's here for potential future ABI compatability
+    // Binary format of the audio
     ma_format format;
 
 } Sound_Spec;

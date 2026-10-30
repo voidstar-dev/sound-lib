@@ -27,8 +27,14 @@ Lock the audio device mutex.
 Note that locking on the same thread multiple times while the lock is already held is currently not supported, and will result in a deadlock!
 The re-entrant behaviour of a lock is called a recursive mutex.
 
+### See Also
+Audio_DeviceUnlock
+
 ## Audio_DeviceUnlock
 Unlock the audio device mutex.
+
+### See Also
+Audio_DeviceLock
 
 
 ## SoundBuffer_Load
@@ -38,6 +44,10 @@ Free the buffer with SoundBuffer_Free.
 ### Returns
 A valid pointer to a Sound_Buffer, or NULL on failure.
 
+### See Also
+SoundBuffer_LoadFromMemory
+SoundBuffer_Free
+
 ## SoundBuffer_LoadFromMemory
 Load a sound into memory from other memory.
 Upon returning, the original data is no longer needed and can be freed if necessary.
@@ -46,9 +56,17 @@ Free the buffer with SoundBuffer_Free.
 ### Returns
 A valid pointer to a Sound_Buffer, or NULL on failure.
 
+### See Also
+SoundBuffer_Load
+SoundBuffer_Free
+
 ## SoundBuffer_Free
 Free the sound buffer.
 This function will also stop any channels that were using this buffer.
+
+### See Also
+SoundBuffer_Load
+SoundBuffer_LoadFromMemory
 
 ## Channel_Play
 Bind a buffer to the channel and play it, resampling to the default device format.
@@ -80,6 +98,10 @@ Channel_Play
 
 ## Channel_Stop
 Stop the channel.
+
+### See Also
+Channel_Play
+Channel_PlayEx
 
 ## Channel_SetVolume
 Set the channel volume.
