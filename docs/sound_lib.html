@@ -186,6 +186,7 @@
 <ul>
 <li><a href=#SoundBuffer_LoadFromMemory>SoundBuffer_LoadFromMemory</a></li>
 <li><a href=#SoundBuffer_Free>SoundBuffer_Free</a></li>
+<li><a href=#Sound_Buffer>Sound_Buffer</a></li>
 </ul>
 <hr>
 
@@ -204,6 +205,7 @@
 <ul>
 <li><a href=#SoundBuffer_Load>SoundBuffer_Load</a></li>
 <li><a href=#SoundBuffer_Free>SoundBuffer_Free</a></li>
+<li><a href=#Sound_Buffer>Sound_Buffer</a></li>
 </ul>
 <hr>
 
@@ -233,11 +235,12 @@
 <h3>Return Value</h3>
 <p>Returns the channel index on success, or -1 on failure.</p>
 <h3>Remarks</h3>
-<p class="desc">This function expects that the buffer data is in some sort of decodable container (.WAV, .MP3)... If you want to play raw, uncompressed data, then call <a href=#Channel_PlayEx>Channel_PlayEx</a>() with <span class="inline-code">raw_audio</span> set to <span class="inline-code">true</span>. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
+<p class="desc">This function expects that the buffer data is in some sort of decodable container (.WAV, .MP3, ...). If you want to play raw, uncompressed data, then call <a href=#Channel_PlayEx>Channel_PlayEx</a>() with <span class="inline-code">raw_audio</span> set to <span class="inline-code">true</span>. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
 <h3>See Also</h3>
 <ul>
 <li><a href=#Channel_PlayEx>Channel_PlayEx</a></li>
 <li><a href=#Channel_Stop>Channel_Stop</a></li>
+<li><a href=#Channel_IsPlaying>Channel_IsPlaying</a></li>
 </ul>
 <hr>
 
@@ -251,11 +254,12 @@
 <h3>Return Value</h3>
 <p>Returns the channel index on success, or -1 on failure.</p>
 <h3>Remarks</h3>
-<p class="desc">If any combination of sample_rate, format, or channels are non-zero, then the library will resample the buffer to that specification, and then again to the output device format. If <span class="inline-code">raw_audio</span> is true, then this indicates that the buffer contains uncompressed raw audio data. In this case, <span class="inline-code">sample_rate</span>, <span class="inline-code">format</span>, and <span class="inline-code">channels</span> _must_ be specified. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
+<p class="desc">If any combination of sample_rate, channels, or format are non-zero, then the library will resample the buffer to that specification, and then again to the output device format. Otherwise, the function behaves identically to <a href=#Channel_Play>Channel_Play</a>. If <span class="inline-code">raw_audio</span> is true, then this indicates that the buffer contains uncompressed raw audio data. In this case, <span class="inline-code">sample_rate</span>, <span class="inline-code">channels</span>, and <span class="inline-code">format</span> _must_ be specified. If <span class="inline-code">loop_count</span> is negative, then the buffer will loop infinitely. Pass -1 as the <span class="inline-code">channel_index</span> to automatically find a free channel.</p>
 <h3>See Also</h3>
 <ul>
 <li><a href=#Channel_Play>Channel_Play</a></li>
 <li><a href=#Channel_Stop>Channel_Stop</a></li>
+<li><a href=#Channel_IsPlaying>Channel_IsPlaying</a></li>
 </ul>
 <hr>
 
@@ -284,6 +288,11 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">The range is typically 0 to 1 (a normalised floating point value). Values exceeding 1 are allowed, but not recommended.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_SetPan>Channel_SetPan</a></li>
+<li><a href=#Channel_SetPitch>Channel_SetPitch</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_SetPan>Channel_SetPan</h2>
@@ -295,6 +304,11 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_SetVolume>Channel_SetVolume</a></li>
+<li><a href=#Channel_SetPitch>Channel_SetPitch</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_SetPitch>Channel_SetPitch</h2>
@@ -306,6 +320,11 @@
 <br>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_SetVolume>Channel_SetVolume</a></li>
+<li><a href=#Channel_SetPan>Channel_SetPan</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_IsPlaying>Channel_IsPlaying</h2>
@@ -319,6 +338,11 @@
 <p>Returns true if the channel is playing, or false otherwise.</p>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_Play>Channel_Play</a></li>
+<li><a href=#Channel_PlayEx>Channel_PlayEx</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_GetPlayCursor>Channel_GetPlayCursor</h2>
@@ -331,7 +355,11 @@
 <h3>Return Value</h3>
 <p>Returns the current play cursor of the channel's buffer in milliseconds, or -1 on failure.</p>
 <h3>Remarks</h3>
-<p class="desc">More user-friendly name for <a href=#Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</a>.</p>
+<p class="desc">For looping sounds, this value will wrap around. More user-friendly name for <a href=#Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</a>.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_SetPlayCursor>Channel_SetPlayCursor</h2>
@@ -345,6 +373,10 @@
 <p>Returns true on success, or false on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">More user-friendly name for <a href=#Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</a>.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_GetPlayingTime>Channel_GetPlayingTime</h2>
@@ -358,6 +390,10 @@
 <p>Returns the total amount of milliseconds since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called, or -1 on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">More user-friendly name for <a href=#Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</a>.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_GetPlayCursorMS>Channel_GetPlayCursorMS</h2>
@@ -371,6 +407,10 @@
 <p>Returns the current play cursor of the channel's buffer in milliseconds, or -1 on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">For looping sounds, this value will wrap around.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_GetPlayCursor>Channel_GetPlayCursor</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_SetPlayCursorMS>Channel_SetPlayCursorMS</h2>
@@ -384,6 +424,10 @@
 <p>Returns true on success, or false on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_SetPlayCursor>Channel_SetPlayCursor</a></li>
+</ul>
 <hr>
 
 <h2 id=Channel_GetPlayingTimeMS>Channel_GetPlayingTimeMS</h2>
@@ -397,6 +441,10 @@
 <p>Returns the total amount of milliseconds since <a href=#Channel_Play>Channel_Play</a>() / <a href=#Channel_PlayEx>Channel_PlayEx</a>() was called, or -1 on failure.</p>
 <h3>Remarks</h3>
 <p class="desc">None.</p>
+<h3>See Also</h3>
+<ul>
+<li><a href=#Channel_GetPlayingTime>Channel_GetPlayingTime</a></li>
+</ul>
 <hr>
 <center><h1>Structs</h1></center><h2 id=Sound_Buffer>Sound_Buffer</h2>
 <div class="codeblock structblock">
@@ -524,7 +572,7 @@
 <footer>
 <center>
 <p>
-Generated by <i>generate_documentation.py</i> on <i>2026-10-29</i>
+Generated by <i>generate_documentation.py</i> on <i>2026-11-07</i>
 </p>
 </center>
 </footer>
