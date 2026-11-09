@@ -34,7 +34,7 @@ Located in [docs/sound_lib.html](docs/sound_lib.html)
 Located in the [examples_sound_lib](examples_sound_lib/) folder.
 
 ## Binaries
-Pre-compiled binaries can be found on the [releases](releases/latest) page.
+Pre-compiled binaries can be found on the [releases](https://github.com/voidstar-dev/sound-lib/releases) page.
 
 
 ## Building with CMake
